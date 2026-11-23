@@ -1,0 +1,29 @@
+// No Response from Axis 
+
+2026-10-27T18:52:33.169+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : === Fetching Page 1 | Cursor: null ===
+2026-10-27T18:52:33.178+05:30 DEBUG 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Json Request---{"Data":{"AccountStatementReportRequestBody":{"corpCode":"SKILWOR2","accountNumber":"922020048692620","userPrinciple":"SKILWOR2","fromDate":"Oct 27, 2026, 6:00:00 PM","toDate":"Oct 27, 2026, 6:30:00 PM","next":""}}}
+2026-10-27T18:52:33.878+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 1 | Status: 200 OK
+2026-10-27T18:52:33.878+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 1 | Raw response body length: 1406
+2026-10-27T18:52:33.882+05:30 DEBUG 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Decrypted Pageable Response Data---{"Data":{"AccountStatementReportResponseBody":{"statusCode":200,"message":"OK","requestTimeEpoch":"1793107353679","requestId":"3b1e0b0e-ed4b-4170-a034-3948d4ea24d1","rowsCount":0,"paging":{"cursors":{"next":"","previous":""}}}},"Risk":{},"Links":{},"Meta":{}}
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 1 | Total rowsCount from Axis: 0
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 1 | No records. Stopping.
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : ==========================================
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : COMPLETED!
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Total Pages Fetched     : 1
+2026-10-27T18:52:33.882+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Total Axis Records      : 0
+2026-10-27T18:52:33.883+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Total DB RRNs           : 12219
+2026-10-27T18:52:33.883+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Total Unmatched (Saved) : 0
+2026-10-27T18:52:33.883+05:30  INFO 4108485 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : 
+
+
+
+// Response come from Axis
+
+2026-10-28T15:21:03.812+05:30  INFO 4155678 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : === Fetching Page 1 | Cursor: MjAyNjEwMjgyMDI2MTAyODE0NDgxNlM3NTM1MTU2NjEwMXx8fDMyNTc= ===
+2026-10-28T15:21:03.812+05:30 DEBUG 4155678 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Json Request---{"Data":{"AccountStatementReportRequestBody":{"corpCode":"SKILWOR2","accountNumber
+":"922020048692620","userPrinciple":"SKILWOR2","fromDate":"Oct 28, 2026, 2:30:00 PM","toDate":"Oct 28, 2026, 3:00:00 PM","next":"MjAyNjEwMjgyMDI2MTAyODE0NDgxNlM3NTM1MTU2NjEwMXx8fDMyNTc\u003d"}}}
+2026-10-28T15:21:08.982+05:30  INFO 4155678 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 2 | Status: 200 OK
+2026-10-28T15:21:08.982+05:30  INFO 4155678 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Page 2 | Raw response body length: 2329771
+2026-10-28T15:21:09.051+05:30 DEBUG 4155678 --- [soundBoxAxisFetchApplication] [cheduled-task-1] com.bijlipay.Service.SoundBoxService     : Decrypted Pageable Response Data---{"Data":{"AccountStatementReportResponseBody":{"statusCode":20
+0,"message":"OK","requestTimeEpoch":"1793181064158","requestId":"0324c202-f944-4dc7-9498-f0c41e766c55","rowsCount":3257,"openingBalance":199479736.14,"closingBalance":202699096.87,"accountNumber":"922020048692620","currency":"INR","data"
+:[{"serialNumber":1,"transactionDate":"28/10/2026","pstdDate":"28/10/2026 14:48:16","transactionParticulars":"UPI/P2M/131982029607/SANDRA MI/HDFC/UPI/","chqNumber":" ","valueDate":"28/10/2026

@@ -1,0 +1,3486 @@
+package com.bijlipay.util;
+
+import com.bijlipay.config.Constants;
+import com.bijlipay.model.LeadInformation;
+import com.bijlipay.model.UploadedDocuments;
+import com.bijlipay.model.dto.MdrChargesDto;
+import com.bijlipay.model.dto.PdfEsignData;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class AggPdfReport {
+    private static final Logger logger = LoggerFactory.getLogger(AggPdfReport.class);
+
+    public ByteArrayOutputStream createAgreementPDF(LeadInformation leadInfo, PdfEsignData pdfEsignData) {
+        try {
+            String pdfFileName = leadInfo.getContactName();
+            File insertFile = new File(Constants.AGREEMENT_DOCUMENT_PATH + pdfFileName + ".pdf");
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            Document document = new Document();
+//            List<byte[]> byteList = new ArrayList<>();
+//            PdfCopy pdfWriter = new PdfCopy(document, byteArrayOutputStream);
+
+            document.setPageSize(PageSize.A4);
+            PdfWriter writer = PdfWriter.getInstance(document, byteArrayOutputStream);
+            writer.setFullCompression();
+            HeaderFooterPageEvent event = new HeaderFooterPageEvent();
+            writer.setPageEvent(event);
+            document.open();
+
+            PdfPTable pdfPTable = new PdfPTable(1);
+            pdfPTable.setWidthPercentage(100);
+            pdfPTable.setWidths(new float[]{1});
+            pdfPTable.setSpacingBefore(5);
+            pdfPTable.addCell(getHeaderCell("APPLICATION FORM"));
+
+            document.add(pdfPTable);
+
+            PdfPTable pdfPTable1 = new PdfPTable(3);
+            pdfPTable1.setWidthPercentage(100);
+            pdfPTable1.setWidths(new float[]{1.3f, 1.1f, 0.6f});
+            pdfPTable1.addCell(getRowCellWithoutBorder("Date of the Agreement :" + String.valueOf(DateUtil.currentDate("dd/MM/yyyy"))));
+            if (leadInfo.getRegion() != null) {
+                pdfPTable1.addCell(getRowCellWithoutBorder("Region :" + leadInfo.getRegion().getRegionAreaName()));
+            } else {
+                pdfPTable1.addCell(getRowCellWithoutBorder("Region :"));
+            }
+            pdfPTable1.addCell(getRowCellWithoutBorder("Ver : " + DateUtil.currentDate("MM/yyyy")));
+            document.add(pdfPTable1);
+
+//            pdfPTable.addCell(pdfPTable1);
+
+            PdfPTable pdfPTable2 = new PdfPTable(1);
+            pdfPTable2.setWidthPercentage(100);
+            pdfPTable2.setWidths(new float[]{1});
+            pdfPTable2.addCell(getHeaderCellColumns("Merchant Details"));
+//            pdfPTable1.addCell(pdfPTable2);
+            document.add(pdfPTable2);
+
+            PdfPTable pdfPTable3 = new PdfPTable(2);
+            pdfPTable3.setWidthPercentage(100);
+            pdfPTable3.setWidths(new float[]{1, 2});
+            pdfPTable3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Legal Name ")); // legal name
+            if (leadInfo.getLegalName() != null) {
+                pdfPTable3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getLegalName()));
+            } else {
+                pdfPTable3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable3);
+
+//            pdfPTable2.addCell(pdfPTable3);
+
+            PdfPTable pdfPTable4 = new PdfPTable(2);
+            pdfPTable4.setWidthPercentage(100);
+            pdfPTable4.setWidths(new float[]{1, 2});
+            pdfPTable4.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("DBA Name ")); // dba name
+            pdfPTable4.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getDbaName() == null ? " " : leadInfo.getDbaName()));
+
+            document.add(pdfPTable4);
+
+//            pdfPTable2.addCell(pdfPTable4);
+
+            PdfPTable pdfPTable5 = new PdfPTable(2);
+            pdfPTable5.setWidthPercentage(100);
+            pdfPTable5.setWidths(new float[]{1, 2});
+            pdfPTable5.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Registered Address ")); // address
+            if (leadInfo.getContactAddress() != null) {
+                pdfPTable5.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getContactAddress()));
+            } else {
+                pdfPTable5.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable5);
+
+//            pdfPTable2.addCell(pdfPTable5);
+
+            PdfPTable pdfPTable6 = new PdfPTable(2);
+            pdfPTable6.setWidthPercentage(100);
+            pdfPTable6.setWidths(new float[]{1, 2});
+            pdfPTable6.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("State "));
+            if (leadInfo.getMerchantStateName() != null) {
+                pdfPTable6.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getMerchantStateName()));
+            } else {
+                pdfPTable6.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable6);
+
+//            pdfPTable2.addCell(pdfPTable6);
+
+            PdfPTable pdfPTable7 = new PdfPTable(2);
+            pdfPTable7.setWidthPercentage(100);
+            pdfPTable7.setWidths(new float[]{1, 2});
+            pdfPTable7.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("PIN code "));
+            if (leadInfo.getPincode() != 0) {
+                String pincode = String.valueOf(leadInfo.getPincode());
+                pdfPTable7.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(pincode)); // need to add pincode
+            } else {
+                pdfPTable7.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" ")); // need to add pincode
+
+            }
+            document.add(pdfPTable7);
+
+//            pdfPTable2.addCell(pdfPTable7);
+
+            PdfPTable newTable = new PdfPTable(2);
+            newTable.setWidthPercentage(100);
+            newTable.setWidths(new float[]{1, 1});
+            newTable.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("DBA Address :     " + leadInfo.getContactAddress()));
+            newTable.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("State :    " + leadInfo.getMerchantStateName()));
+            document.add(newTable);
+
+//            pdfPTable2.addCell(newTable);
+
+            PdfPTable newTable1 = new PdfPTable(2);
+            newTable1.setWidthPercentage(100);
+            newTable1.setWidths(new float[]{1, 1});
+            newTable1.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("City :     " + leadInfo.getMerchantDistrictName()));
+            newTable1.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Pincode :    " + leadInfo.getPincode()));
+
+            document.add(newTable1);
+
+//            pdfPTable2.addCell(newTable1);
+
+
+            PdfPTable pdfPTable8 = new PdfPTable(2);
+            pdfPTable8.setWidthPercentage(100);
+            pdfPTable8.setWidths(new float[]{1, 2});
+            pdfPTable8.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Type Of Business Entry"));  // type of business
+//            pdfPTable8.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getMerchantType().getMerchantTypeName()));
+
+
+            PdfPTable nestedTable2 = new PdfPTable(8);
+            nestedTable2.setWidthPercentage(80);
+            nestedTable2.setWidths(new float[]{0.09f, 0.5f, 0.09f, 0.5f, 0.09f, 0.5f, 0.09f, 0.5f});
+
+//            List<String> merchantTypeList = pdfEsignData.getMerchantTypeList().stream().map(MerchantType::getMerchantTypeName).toList();
+            List<String> merchantType = Collections.singletonList(leadInfo.getMerchantType().getMerchantTypeName());
+
+            int numberValue = roundToMultipleOfFour(pdfEsignData.getMerchantTypeList().size());
+            logger.info("number --------- : {}", numberValue);
+            for (int i = 0; i <= numberValue; i++) {
+                if (i < pdfEsignData.getMerchantTypeList().size()) {
+                    if (merchantType.contains(pdfEsignData.getMerchantTypeList().get(i).getMerchantTypeName())) {
+                        nestedTable2.addCell(getCheckBox1());  // need to add value
+                    } else {
+                        nestedTable2.addCell(getCheckBox2());  // need to add value
+                    }
+                    nestedTable2.addCell(getRowCellWithoutBorderForCheckBox(pdfEsignData.getMerchantTypeList().get(i).getMerchantTypeName()));
+                } else {
+                    nestedTable2.addCell(getRowCellWithoutBorder(" "));  // need to add value
+                    nestedTable2.addCell(getRowCellWithoutBorder(" "));
+                }
+            }
+            pdfPTable8.addCell(nestedTable2);
+
+            document.add(pdfPTable8);
+
+//            pdfPTable2.addCell(pdfPTable8);
+
+            PdfPTable pdfPTable9 = new PdfPTable(2);
+            pdfPTable9.setWidthPercentage(100);
+            pdfPTable9.setWidths(new float[]{1, 2});
+            pdfPTable9.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("MCC "));
+            if (leadInfo.getMcc() != null) {
+                pdfPTable9.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getMcc().getMccCode() + "-" + leadInfo.getMcc().getIndustryName())); // mcc
+            } else {
+                pdfPTable9.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" ")); // mcc
+            }
+            document.add(pdfPTable9);
+
+//            pdfPTable2.addCell(pdfPTable9);
+
+            PdfPTable pdfPTable10 = new PdfPTable(2);
+            pdfPTable10.setWidthPercentage(100);
+            pdfPTable10.setWidths(new float[]{1, 2});
+            pdfPTable10.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Year of establishment"));
+            pdfPTable10.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" ")); // need to add year of establishment
+
+            document.add(pdfPTable10);
+
+//            pdfPTable2.addCell(pdfPTable10);
+
+            PdfPTable pdfPTable11 = new PdfPTable(2);
+            pdfPTable11.setWidthPercentage(100);
+            pdfPTable11.setWidths(new float[]{1, 2});
+            pdfPTable11.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("PAN"));
+            logger.info("pan ------------------------->: {}", pdfEsignData.getPan());
+            if (pdfEsignData.getPan() != null) {
+                pdfPTable11.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(pdfEsignData.getPan()));
+            } else {
+                pdfPTable11.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable11);
+
+//            pdfPTable2.addCell(pdfPTable11);
+
+            PdfPTable pdfPTable12 = new PdfPTable(2);
+            pdfPTable12.setWidthPercentage(100);
+            pdfPTable12.setWidths(new float[]{1, 2});
+            pdfPTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("GST"));
+            logger.info("GST------------------------->: {}", pdfEsignData.getGstin());
+            if (pdfEsignData.getGstin() != null) {
+                pdfPTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(pdfEsignData.getGstin()));
+            } else {
+                pdfPTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable12);
+
+//            pdfPTable2.addCell(pdfPTable12);
+
+            PdfPTable newTable2 = new PdfPTable(2);
+            newTable2.setWidthPercentage(100);
+            newTable2.setWidths(new float[]{1, 2});
+            newTable2.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Name(s) of the Owner/Proprietor/Partner/Directors"));
+            newTable2.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getMerchantName()));
+
+            document.add(newTable2);
+
+//            pdfPTable2.addCell(newTable2);
+
+            PdfPTable pdfPTable13 = new PdfPTable(2);
+            pdfPTable13.setWidthPercentage(100);
+            pdfPTable13.setWidths(new float[]{1, 2});
+            pdfPTable13.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Name(s) of the Authorized Signatory "));
+            pdfPTable13.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getMerchantName()));
+
+            document.add(pdfPTable13);
+
+//            pdfPTable2.addCell(pdfPTable13);
+
+            PdfPTable pdfPTable14 = new PdfPTable(2);
+            pdfPTable14.setWidthPercentage(100);
+            pdfPTable14.setWidths(new float[]{1, 2});
+            pdfPTable14.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Nature of Business"));
+            logger.info("Nature of the business ------------------------->: {}", pdfEsignData.getNatureOfBusiness());
+            if (pdfEsignData.getNatureOfBusiness() != null) {
+                pdfPTable14.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(pdfEsignData.getNatureOfBusiness()));
+            } else {
+                pdfPTable14.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" ")); // need to add nature of the business
+            }
+
+            document.add(pdfPTable14);
+
+//            pdfPTable2.addCell(pdfPTable14);
+
+            PdfPTable pdfPTable15 = new PdfPTable(2);
+            pdfPTable15.setWidthPercentage(100);
+            pdfPTable15.setWidths(new float[]{1, 2});
+            pdfPTable15.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Type Of Device"));
+            pdfPTable15.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getDevice().getDeviceName()));
+
+            document.add(pdfPTable15);
+
+//            pdfPTable2.addCell(pdfPTable15);
+
+            PdfPTable pdfPTable16 = new PdfPTable(2);
+            pdfPTable16.setWidthPercentage(100);
+            pdfPTable16.setWidths(new float[]{1, 2});
+            pdfPTable16.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Services"));
+//            if(leadInfo.getVasInstanceMapping()!= null){
+//                String result = leadInfo.getVasInstanceMapping().replaceAll("[-\"+\\[\\].^:]"," ");
+//                pdfPTable16.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(result));
+//            }
+//            else {
+//                pdfPTable16.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getVasInstanceMapping()));
+//            }
+
+            PdfPTable nestedTable1 = new PdfPTable(8);
+            nestedTable1.setWidthPercentage(90);
+            nestedTable1.setWidths(new float[]{0.09f, 0.5f, 0.09f, 0.5f, 0.09f, 0.5f, 0.09f, 0.5f});
+
+            List<String> outputList = convertStringToList(leadInfo.getVasInstanceMapping());
+
+//            System.out.println("Converted list: " + outputList.get(0) +"--------------"+outputList.get(1));
+
+            int roundValue = roundToMultipleOfFour(pdfEsignData.getVasList().size());
+            logger.info("number --------- : {}", roundValue);
+            for (int i = 0; i <= roundValue; i++) {
+                if (i < pdfEsignData.getVasList().size()) {
+
+                    if (outputList.contains(pdfEsignData.getVasList().get(i).getName())) {
+                        nestedTable1.addCell(getCheckBox1());  // need to add value
+                    } else {
+                        nestedTable1.addCell(getCheckBox2());  // need to add value
+                    }
+                    logger.info("vas name {} vas id {}", pdfEsignData.getVasList().get(i).getName(), i);
+                    nestedTable1.addCell(getRowCellWithoutBorderForCheckBox(pdfEsignData.getVasList().get(i).getName()));
+                } else {
+                    nestedTable1.addCell(getRowCellWithoutBorder(" "));  // need to add value
+                    nestedTable1.addCell(getRowCellWithoutBorder(" "));
+                }
+            }
+            pdfPTable16.addCell(nestedTable1);
+
+            document.add(pdfPTable16);
+
+//            document.add(new Paragraph(String.valueOf(checkboxChar),font));
+
+//            pdfPTable2.addCell(pdfPTable16);
+
+            PdfPTable pTable = new PdfPTable(1);
+            pTable.setWidthPercentage(100);
+            pTable.setWidths(new float[]{1});
+            pTable.addCell(getHeaderCellColumns("Merchant Details"));
+            document.add(pTable);
+//            pdfPTable2.setWidthPercentage(100);
+//            pdfPTable2.setWidths(new float[]{1});
+//            pdfPTable2.addCell(getHeaderCellColumns("Merchant Details"));
+
+            PdfPTable pTable1 = new PdfPTable(2);
+            pTable1.setWidthPercentage(100);
+            pTable1.setWidths(new float[]{1, 2});
+            pTable1.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Residential Address"));
+            pTable1.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+
+            document.add(pTable1);
+
+//            pdfPTable2.addCell(pTable1);
+
+
+            PdfPTable pTable3 = new PdfPTable(3);
+            pTable3.setWidthPercentage(100);
+            pTable3.setWidths(new float[]{1, 1, 1});
+            pTable3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("State:     " + leadInfo.getMerchantStateName()));
+            pTable3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("City:     ")); //need to add value
+            pTable3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("PIN code:     " + leadInfo.getPincode()));
+
+            document.add(pTable3);
+
+//            pdfPTable2.addCell(pTable3);
+
+
+            PdfPTable pTable5 = new PdfPTable(3);
+            pTable5.setWidthPercentage(100);
+            pTable5.setWidths(new float[]{1, 1, 1});
+            PdfPCell pdfPCell = getCellwithLeftAlignWithLeftBottomtBorderSize45("Contact details:");
+            pdfPCell.setRowspan(2);
+            pTable5.addCell(pdfPCell);
+            pTable5.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Name:      " + leadInfo.getContactName()));
+            pTable5.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Mobile No:     " + leadInfo.getContactNumber()));
+//            pTable5.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45(" "));
+            pTable5.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Alternate Mobile Number:      " + " "));  //need to add value
+            pTable5.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("LandLine:     " + " "));  //need to add value
+
+            document.add(pTable5);
+
+            pdfPTable2.addCell(pTable5);
+
+//            PdfPTable newTable3 = new PdfPTable(3);
+//            newTable3.setWidthPercentage(100);
+//            newTable3.setWidths(new float[]{1, 1,1});
+//            newTable3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45(" "));
+//            newTable3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Alternate Mobile Number:      " + " "));  //need to add value
+//            newTable3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("LandLine:     " +  " "));  //need to add value
+//
+//            document.add(newTable3);
+
+//            pdfPTable2.addCell(newTable3);
+
+            PdfPTable pTable6 = new PdfPTable(2);
+            pTable6.setWidthPercentage(100);
+            pTable6.setWidths(new float[]{1, 2});
+            pTable6.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Email id"));
+            pTable6.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getContactEmail()));
+
+            document.add(pTable6);
+
+//            pdfPTable2.addCell(pTable6);
+//merchant business details
+
+            PdfPTable table = new PdfPTable(1);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{1});
+            table.addCell(getHeaderCellColumns("Merchant Business Information"));
+
+            document.add(table);
+
+//            pdfPTable2.setWidthPercentage(100);
+//            pdfPTable2.setWidths(new float[]{1});
+//            pdfPTable2.addCell(getHeaderCellColumns("Merchant Business Information"));
+
+            PdfPTable table1 = new PdfPTable(1);
+            table1.setWidthPercentage(100);
+            table1.setWidths(new float[]{1});
+            table1.addCell(getSubHeaderCellwithCenterAlignWithBold("Business Hours"));
+
+            document.add(table1);
+
+//            pdfPTable2.addCell(table1);
+
+            PdfPTable table2 = new PdfPTable(3);
+            table2.setWidthPercentage(100);
+            table2.setWidths(new float[]{1, 1, 1});
+            table2.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Weekdays"));
+            // weekday timing start
+            if (leadInfo.getWeekDayTimingStart() != null) {
+//                String fromTime = DateUtil.formattedTime(leadInfo.getWeekDayTimingStart(), "HH:mm:ss");
+                String fromTime = leadInfo.getWeekDayTimingStart();
+                table2.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("FROM :     " + fromTime));
+            } else {
+                table2.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("FROM :     "));
+            }
+            //Weekday Timing end
+            if (leadInfo.getWeekdayTimingEnd() != null) {
+//                String toTime = DateUtil.formattedTime(leadInfo.getWeekdayTimingEnd(), "HH:mm:ss");
+                String toTime = leadInfo.getWeekdayTimingEnd();
+                table2.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("TO :     " + toTime));
+            } else {
+                table2.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("TO :     "));
+            }
+
+            document.add(table2);
+
+//            pdfPTable2.addCell(table2);
+
+            PdfPTable table3 = new PdfPTable(3);
+            table3.setWidthPercentage(100);
+            table3.setWidths(new float[]{1, 1, 1});
+            table3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Weekend"));
+
+            //Weekend Timing start
+            if (leadInfo.getWeekendTimingStart() != null) {
+//                String fromTime = DateUtil.formattedTime(leadInfo.getWeekendTimingStart(), "HH:mm:ss");
+                String fromTime = leadInfo.getWeekendTimingStart();
+                table3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("FROM :     " + fromTime));
+            } else {
+                table3.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("FROM :     "));
+            }
+
+
+            //Weekend Timing End
+            if (leadInfo.getWeekendTimingEnd() != null) {
+//                String toTime = DateUtil.formattedTime(leadInfo.getWeekendTimingEnd(), "HH:mm:ss");
+                String toTime = leadInfo.getWeekendTimingEnd();
+                table3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("TO :     " + toTime));
+            } else {
+                table3.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("TO :     "));
+            }
+
+
+            document.add(table3);
+
+//            pdfPTable2.addCell(table3);
+
+            PdfPTable table4 = new PdfPTable(3);
+            table4.setWidthPercentage(100);
+            table4.setWidths(new float[]{1, 1, 1});
+            table4.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Business Income :     " + leadInfo.getYearlyRevenue()));
+            table4.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Turnover During Last Year :     " + " "));  // need to add value
+            table4.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Amount :     " + leadInfo.getTurnOverLastFinancialYear()));
+
+            document.add(table4);
+
+//            pdfPTable2.addCell(table4);
+//            table4.addCell(getSubHeaderCellwithLeftAlign("Amount :"));
+
+            PdfPTable pdfPTable17 = new PdfPTable(1);
+            pdfPTable17.setWidthPercentage(100);
+            pdfPTable17.setWidths(new float[]{1});
+            pdfPTable17.addCell(getHeaderCellColumns("Merchant Other Information"));
+
+            document.add(pdfPTable17);
+//            pdfPTable2.setWidthPercentage(100);
+//            pdfPTable2.setWidths(new float[]{1});
+//            pdfPTable2.addCell(getHeaderCellColumns("Merchant Other Information"));
+
+            PdfPTable pdfPTable18 = new PdfPTable(4);
+            pdfPTable18.setWidthPercentage(100);
+            pdfPTable18.setWidths(new float[]{1, 1, 0.5f, 0.5f});
+            pdfPTable18.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Expected Card Business:"));
+            pdfPTable18.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Average Bill Amount :     " + leadInfo.getAvgBillAmount()));
+            pdfPTable18.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("CC :     " + " "));   //need to add value
+            pdfPTable18.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("DC :     " + " "));   //need to add value
+
+            document.add(pdfPTable18);
+
+//            pdfPTable2.addCell(pdfPTable18);
+
+            PdfPTable pdfPTable19 = new PdfPTable(2);
+            pdfPTable19.setWidthPercentage(100);
+            pdfPTable19.setWidths(new float[]{1, 2});
+            pdfPTable19.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Name of other POS currently used:"));
+            pdfPTable19.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+
+            document.add(pdfPTable19);
+
+//            pdfPTable2.addCell(pdfPTable19);
+
+            PdfPTable pdfPTable20 = new PdfPTable(3);
+            pdfPTable20.setWidthPercentage(100);
+            pdfPTable20.setWidths(new float[]{1, 1, 1});
+            pdfPTable20.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Current MDR:"));
+            //Debit MDR
+            if (leadInfo.getDebitMdr() != 0.0) {
+                pdfPTable20.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Debit Cards :     " + leadInfo.getDebitMdr()));
+            } else {
+                pdfPTable20.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Debit Cards :" + " "));
+            }
+            //Credit MDR
+            if (leadInfo.getCreditMdr() != 0.0) {
+                pdfPTable20.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Credit Cards :     " + leadInfo.getCreditMdr()));
+            } else {
+                pdfPTable20.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Credit Cards :" + " "));
+            }
+
+            document.add(pdfPTable20);
+
+//            pdfPTable2.addCell(pdfPTable20);
+
+            PdfPTable pdfPTable21 = new PdfPTable(2);
+            pdfPTable21.setWidthPercentage(100);
+            pdfPTable21.setWidths(new float[]{1, 2});
+            pdfPTable21.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Member Since:"));
+            if (leadInfo.getMemberSince() != null) {
+                String memberSince = DateUtil.formattedDate(leadInfo.getMemberSince(), "dd/MM/yyyy");
+                pdfPTable21.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(memberSince));
+            } else {
+                pdfPTable21.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pdfPTable21);
+
+//            pdfPTable2.addCell(pdfPTable21);
+
+//            PdfPTable spaceTable = new PdfPTable(1);
+//            spaceTable.setWidthPercentage(100);
+//            spaceTable.setWidths(new float[]{1});
+//            spaceTable.addCell(getRowCellWithoutBorderRightAlignSize8(" "));
+
+//            PdfPTable signTable = new PdfPTable(1);
+//            signTable.setWidthPercentage(100);
+//            signTable.setWidths(new float[]{1});
+//            signTable.addCell(getRowCellWithoutBorderRightAlignSize8("Please do not pay in cash - Transfer only to company account"));
+//            pdfPTable2.addCell(signTable);
+//
+//            document.add(signTable);
+
+
+            document.newPage(); //need to change
+
+
+            PdfPTable pTable7 = new PdfPTable(1);
+            pTable7.setWidthPercentage(100);
+            pTable7.setWidths(new float[]{1});
+            pTable7.addCell(getHeaderCellColumns("Merchant Bank Details"));
+
+            document.add(pTable7);
+
+            PdfPTable pTable8 = new PdfPTable(2);
+            pTable8.setWidthPercentage(100);
+            pTable8.setWidths(new float[]{1, 2});
+            pTable8.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Bank Name"));
+            if (leadInfo.getBank() != null) {
+                pTable8.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getBank()));
+            } else {
+                pTable8.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pTable8);
+
+//            pTable7.addCell(pTable8);
+
+            PdfPTable pTable9 = new PdfPTable(2);
+            pTable9.setWidthPercentage(100);
+            pTable9.setWidths(new float[]{1, 2});
+            pTable9.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Branch Name"));
+            if (leadInfo.getBranch() != null) {
+                pTable9.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getBranch()));
+            } else {
+                pTable9.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pTable9);
+
+//            pTable7.addCell(pTable9);
+
+            PdfPTable pTable10 = new PdfPTable(2);
+            pTable10.setWidthPercentage(100);
+            pTable10.setWidths(new float[]{1, 2});
+            pTable10.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Direct credit to bank Acc no"));
+            if (leadInfo.getAccountNumber() != null) {
+                pTable10.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getAccountNumber()));
+            } else {
+                pTable10.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+
+            document.add(pTable10);
+
+//            pTable7.addCell(pTable10);
+
+            PdfPTable pTable11 = new PdfPTable(2);
+            pTable11.setWidthPercentage(100);
+            pTable11.setWidths(new float[]{1, 2});
+            pTable11.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("IFSC Code: "));
+            if (leadInfo.getIfscCode() != null) {
+                pTable11.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getIfscCode()));
+            } else {
+                pTable11.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+            document.add(pTable11);
+
+//            pTable7.addCell(pTable11);
+
+
+//            PdfPTable pTable12 = new PdfPTable(4);
+//            pTable12.setWidthPercentage(100);
+//            pTable12.setWidths(new float[]{1,0.8f,0.7f,0.5f});
+//            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("MICR: "));
+//            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45(" "));
+//            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Account Type:"));
+//            if(leadInfo.getLeadSourceMCCAccountTypeMapping() != null){
+//                pTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getLeadSourceMCCAccountTypeMapping().getAccountType()));
+//            }else{
+//                pTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+//            }
+//
+//            document.add(pTable12);
+
+            PdfPTable pTable12 = new PdfPTable(3);
+            pTable12.setWidthPercentage(100);
+            pTable12.setWidths(new float[]{1, 1, 1});
+            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("MICR: "));
+            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45(" "));  //need to add value
+
+            PdfPTable nestedTable4 = new PdfPTable(4);
+            nestedTable4.setWidthPercentage(100);
+            nestedTable4.setWidths(new float[]{0.09f, 0.5f, 0.09f, 0.5f});
+
+            List<String> accountTypes = new ArrayList<>(Arrays.asList("Savings", "Current"));
+
+            int roundValueOf2 = roundToMultipleOfTwo(accountTypes.size());
+            logger.info("number --------- : {}", numberValue);
+            for (int i = 0; i <= roundValueOf2; i++) {
+                if (i < accountTypes.size()) {
+                    if (leadInfo.getLeadSourceMCCAccountTypeMapping() != null) {
+                        if (leadInfo.getLeadSourceMCCAccountTypeMapping().getAccountType().contains(accountTypes.get(i))) {
+                            nestedTable4.addCell(getCheckBox1());  // need to add value
+                        } else {
+                            nestedTable4.addCell(getCheckBox2());  // need to add value
+                        }
+                        nestedTable4.addCell(getRowCellWithoutBorderForCheckBox(accountTypes.get(i)));
+                    } else {
+                        nestedTable4.addCell(getRowCellWithoutBorder(" "));  // need to add value
+                        nestedTable4.addCell(getRowCellWithoutBorder(" "));
+                    }
+                } else {
+                    nestedTable4.addCell(getRowCellWithoutBorder(" "));  // need to add value
+                    nestedTable4.addCell(getRowCellWithoutBorder(" "));
+                }
+            }
+            pTable12.addCell(nestedTable4);
+
+//            pTable12.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Account Type:"));
+//            if(leadInfo.getLeadSourceMCCAccountTypeMapping() != null){
+//                pTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(leadInfo.getLeadSourceMCCAccountTypeMapping().getAccountType()));
+//            }else{
+//                pTable12.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+//            }
+
+            document.add(pTable12);
+
+//            pTable7.addCell(pTable12);
+
+            PdfPTable newTable5 = new PdfPTable(6);
+            newTable5.setWidthPercentage(100);
+            newTable5.setWidths(new float[]{0.09f, 0.91f, 0.09f, 0.91f, 0.09f, 0.91f});
+            newTable5.addCell(getCheckBox2WithRightBorder());
+            newTable5.addCell(getRowCellWithoutBorderForCheckBox("Bank Statement Attached :   " + " ")); //Need to add value
+            newTable5.addCell(getCheckBox2WithoutLeftBorder());
+            newTable5.addCell(getRowCellWithoutBorderForCheckBox("Cancelled Cheque Leaf Attached : ")); //Need to add value
+            newTable5.addCell(getCheckBox2WithoutLeftBorder());
+            newTable5.addCell(getRowCellWithRightBorderForCheckBox("Bank Passbook:"));
+
+            document.add(newTable5);
+
+//            pTable7.addCell(newTable5);
+
+            PdfPTable newTable6 = new PdfPTable(1);
+            newTable6.setWidthPercentage(100);
+            newTable6.setWidths(new float[]{1});
+            newTable6.addCell(getHeaderCellColumns("Payment Details"));
+
+            document.add(newTable6);
+//            pTable7.setWidthPercentage(100);
+//            pTable7.setWidths(new float[]{1});
+//            pTable7.addCell(getHeaderCellColumns("Payment Details"));
+
+
+            PdfPTable pTable13 = new PdfPTable(6);
+            pTable13.setWidthPercentage(100);
+            pTable13.setWidths(new float[]{0.09f, 2, 0.5f, 0.5f, 0.5f, 0.5f});
+            pTable13.addCell(getCheckBox2WithLeftBottomBorder());
+            pTable13.addCell(getCellwithLeftAlignBottomtBorderSize45("Device owned by bijlipay"));
+            pTable13.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Installation Fee"));
+            pTable13.addCell(getCellwithLeftAlignBottomtBorderSize45("INR: ")); // need to add
+            pTable13.addCell(getCellwithLeftAlignBottomtBorderSize45(" ")); // need to add
+            pTable13.addCell(getCellwithLeftAlignWithRightBottomtBorderSize("+GST")); // need to add
+
+
+            document.add(pTable13);
+
+//            pTable7.addCell(pTable13);
+
+            PdfPTable pTable14 = new PdfPTable(6);
+            pTable14.setWidthPercentage(100);
+            pTable14.setWidths(new float[]{0.09f, 2, 0.5f, 0.5f, 0.5f, 0.5f});
+            pTable14.addCell(getCheckBox2WithLeftBottomBorder());
+            pTable14.addCell(getCellwithLeftAlignBottomtBorderSize45("Device owned by Merchant"));
+            pTable14.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Device price"));
+            pTable14.addCell(getCellwithLeftAlignBottomtBorderSize45("INR: "));  // need to add
+            pTable14.addCell(getCellwithLeftAlignBottomtBorderSize45(" ")); // need to add
+            pTable14.addCell(getCellwithLeftAlignWithRightBottomtBorderSize("+GST")); // need to add
+
+            document.add(pTable14);
+
+//            pTable7.addCell(pTable14);
+
+            PdfPTable pTable15 = new PdfPTable(3);
+            pTable15.setWidthPercentage(100);
+            pTable15.setWidths(new float[]{1.5f, 0.5f, 1});
+            pTable15.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Advance rent/set-up/implemention fee collected(including applicable GST)"));
+            pTable15.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("INR:"));
+            if (leadInfo.getAmountCollected() != 0.0) {
+                pTable15.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(String.valueOf(leadInfo.getAmountCollected())));
+            } else {
+                pTable15.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(" "));
+            }
+
+
+            document.add(pTable15);
+
+//            pTable7.addCell(pTable15);
+
+            PdfPTable pTable16 = new PdfPTable(4);
+            pTable16.setWidthPercentage(100);
+            pTable16.setWidths(new float[]{0.5f, 0.5f, 1, 1});
+            pTable16.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Adv rent No of years: "));   //need to add value
+
+            PdfPTable nestedTable5 = new PdfPTable(4);
+            nestedTable5.setWidthPercentage(100);
+            nestedTable5.setWidths(new float[]{0.1f, 0.2f, 0.1f, 0.2f});
+            nestedTable5.addCell(getCheckBox2());
+            nestedTable5.addCell(getRowCellWithoutBorder("1"));
+            nestedTable5.addCell(getCheckBox2());
+            nestedTable5.addCell(getRowCellWithoutBorder("2"));
+
+            pTable16.addCell(nestedTable5);
+
+            pTable16.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("EMI No of months: "));     //need to add value
+            pTable16.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("EMI Amount   INR"));      //need to add value
+
+            document.add(pTable16);
+
+//            pTable7.addCell(pTable16);
+
+            PdfPTable pTable17 = new PdfPTable(2);
+            pTable17.setWidthPercentage(100);
+            pTable17.setWidths(new float[]{1, 2});
+            pTable17.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("2nd year INR"));
+            pTable17.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("3rd year Onwards AMC INR:"));
+
+            document.add(pTable17);
+
+//            pTable7.addCell(pTable17);
+
+            PdfPTable pTable18 = new PdfPTable(1);
+            pTable18.setWidthPercentage(100);
+            pTable18.setWidths(new float[]{1});
+            pTable18.addCell(getHeaderCellColumns("Swipe"));
+
+            document.add(pTable18);
+
+//            pTable7.setWidthPercentage(100);
+//            pTable7.setWidths(new float[]{1});
+//            pTable7.addCell(getHeaderCellColumns("Swipe"));
+
+            PdfPTable pTable19 = new PdfPTable(3);
+            pTable19.setWidthPercentage(100);
+            pTable19.setWidths(new float[]{0.8f, 0.8f, 1.4f});
+            pTable19.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Amount: ")); //need to add value
+            pTable19.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Date: ")); //need to add value
+            pTable19.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Swiped in the terminal of: ")); //need to add value
+
+            document.add(pTable19);
+
+//            pTable7.addCell(pTable19);
+
+            PdfPTable pTable20 = new PdfPTable(1);
+
+            pTable20.setWidthPercentage(100);
+            pTable20.setWidths(new float[]{1});
+            pTable20.addCell(getHeaderCellColumns("Cheque/DD"));
+
+            document.add(pTable20);
+
+
+//            pTable7.setWidthPercentage(100);
+//            pTable7.setWidths(new float[]{1});
+//            pTable7.addCell(getHeaderCellColumns("Cheque/DD"));
+
+            PdfPTable pTable21 = new PdfPTable(2);
+            pTable21.setWidthPercentage(100);
+            pTable21.setWidths(new float[]{2, 2});
+            pTable21.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Cheque/DD No:"));
+            pTable21.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Amount:"));
+
+            document.add(pTable21);
+
+//            pTable7.addCell(pTable21);
+
+            PdfPTable pTable22 = new PdfPTable(2);
+            pTable22.setWidthPercentage(100);
+            pTable22.setWidths(new float[]{2, 2});
+            pTable22.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Cheque/DD Date: "));
+            pTable22.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("Cheque Deposit Date: "));
+
+            document.add(pTable22);
+
+//            pTable7.addCell(pTable22);
+
+//            document.add(pTable7);
+
+
+            PdfPTable pTable23 = new PdfPTable(1);
+            pTable23.setWidthPercentage(100);
+            pTable23.setWidths(new float[]{1});
+            pTable23.addCell(getHeaderCellColumns("Bank Name:"));  //need to value
+
+            document.add(pTable23);
+
+            PdfPTable pTable24 = new PdfPTable(1);
+            pTable24.setWidthPercentage(100);
+            pTable24.setWidths(new float[]{1});
+            pTable24.addCell(getHeaderCellColumns("NEFT/IMPS/PG REFS NO:"));  //need to add value
+            document.add(pTable24);
+//            pTable23.setWidthPercentage(100);
+//            pTable23.setWidths(new float[]{1});
+//            pTable23.addCell(getHeaderCellColumns("NEFT/IMPS/PG REFS NO:"));  //need to add value
+
+
+            PdfPTable pTable25 = new PdfPTable(5);
+            pTable25.setWidthPercentage(100);
+            pTable25.setWidths(new float[]{1, 1, 1, 0.5f, 0.5f});
+            pTable25.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Gold plan"));
+            pTable25.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45(" ")); //need to add value
+            pTable25.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Period(specify the month and year)"));
+            pTable25.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("from:")); //need to add value
+            pTable25.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("to:")); //need to add value
+
+            document.add(pTable25);
+//            pTable23.addCell(pTable25);
+
+
+//            pTable25.addCell(pTable26);
+
+            PdfPTable pTable26 = new PdfPTable(2);
+            pTable26.setWidthPercentage(100);
+            pTable26.setWidths(new float[]{1, 3});
+            pTable26.addCell(getRowCellWithLeftBorderSize8(""));
+
+//            document.add(pTable26);
+
+            String text = "In the event merchant falls exclusively under the category of \"Freedom Plan\" then such merchant shall be provided under the Offer as set out herein below.";
+            pTable26.addCell(getRowCellWithRightBorderSize8(text));
+            pTable26.addCell(getRowCellWithLeftBorderSize8("Freedom plan"));
+            PdfPTable nestedTable = new PdfPTable(5);
+            nestedTable.setWidthPercentage(80);
+            nestedTable.setWidths(new float[]{1.5f, 0.1f, 0.5f, 1.2f, 1.2f});
+            nestedTable.addCell(getRowCellWithAllBorderWithPadding4(" "));  // need to add value
+            nestedTable.addCell(getRowCellWithoutBorder(""));
+            nestedTable.addCell(getRowCellWithoutRightBorderWithPadding4CenterAlign("Period"));
+            nestedTable.addCell(getRowCellWithoutRightBorderWithPadding4("from: "));
+            nestedTable.addCell(getRowCellWithAlltBorderWithPadding4("to: "));
+
+//            PdfPCell pdfPCell = new PdfPCell(nestedTable);
+//            pdfPCell.setBorder(Rectangle.NO_BORDER);
+//            pTable26.addCell(pdfPCell);
+////            pTable26.addCell(getRowCellWithAllBorder("Period:    from:    to:    "));
+
+            pTable26.addCell(getCellWithLeftBorder(nestedTable));
+
+            pTable26.addCell(getRowCellWithLeftBottomBorderSize8(""));
+            String text1 = "If the merchant undertakes 75(Seventy five) transactions for every 90(Ninety) days and retains the POS device provided by STPL for the period of 2 years, then you " +
+                    "will not be liable to pay the 3rd year AMC charge subject to the terms and condition of this Agreement.";
+            pTable26.addCell(getRowCellWithRightBottomBorderSize8(text1));
+
+
+            document.add(pTable26);
+//            document.add(pTable26);
+//            pTable23.addCell(pTable26);
+
+            PdfPTable pTable27 = new PdfPTable(3);
+            pTable27.setWidthPercentage(100);
+            pTable27.setWidths(new float[]{3, 1, 1});
+            pTable27.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Monthly Rent "));
+            pTable27.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("INR: ")); // need to add value
+            pTable27.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("+GST"));
+
+            document.add(pTable27);
+//            pTable23.addCell(pTable27);
+
+            PdfPTable pTable28 = new PdfPTable(2);
+            pTable28.setWidthPercentage(100);
+            pTable28.setWidths(new float[]{3, 2});
+            pTable28.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("No of Terminals"));
+            if (leadInfo.getDeviceCount() != 0) {
+                String numberOfTerminals = String.valueOf(leadInfo.getDeviceCount());
+                pTable28.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(numberOfTerminals));
+            } else {
+                pTable28.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45(""));
+            }
+
+            document.add(pTable28);
+//            pTable23.addCell(pTable28);
+
+            PdfPTable pTable29 = new PdfPTable(3);
+            pTable29.setWidthPercentage(100);
+            pTable29.setWidths(new float[]{3, 1, 1});
+            pTable29.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Other charges(Pls specify)"));
+            pTable29.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("INR: "));
+            pTable29.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("+GST"));
+
+            document.add(pTable29);
+
+//            pTable23.addCell(pTable29);
+
+            PdfPTable pTable30 = new PdfPTable(3);
+            pTable30.setWidthPercentage(100);
+            pTable30.setWidths(new float[]{3, 1, 1});
+            pTable30.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("Total amount paid"));
+            pTable30.addCell(getCellwithLeftAlignWithLeftBottomtBorderSize45("INR: "));
+            pTable30.addCell(getCellwithLeftAlignWithRightBottomtBorderSize45("+GST"));
+
+            document.add(pTable30);
+
+            pTable23.addCell(pTable30);
+
+
+            String text2 = "This contract is automatically renewed unless cancelled by the merchant giving at least one month notice or " +
+                    "cancelled by STPL for reasons mentioned in the main agreement, under section \"Termination\".Rental for renewal period " +
+                    "(as per the initial subscription) would be collected by Cheque/NEFT/Card Swipe/DD/ACH/SI/MID debit from the settlement " +
+                    "done/Recovery from Bank Account\n\n" +
+                    "Terms & Conditions:\n" +
+                    "1) The fees/rent/charges collected are non refundable and to be paid by way of crossed Cheque/card/NEFT in favour of " +
+                    "skilworth technologies private limited Chennai.\n" +
+                    "2) The Mpos/GPRS/Android device is the property of skilworth technologies PVT ltd. In the event if any loss or breakage," +
+                    "we reserve the right to recover the full cost of the terminal from the merchant.\n" +
+                    "3) Mpos/GPRS/Android service is on a best effort basis on availability of sufficient signals from the telco service provider at " +
+                    "the location of deployment of the device.\n" +
+                    "4) Please Mpos/GPRS/Android this acknowledgement as no duplicate should be issued under any circumstances.\n" +
+                    "5) Warranty on the device is for two years. Warranty does not cover physical damage/damage due to negligence in " +
+                    "handling the device wear & tear,lost and theft etc.\n" +
+                    "6) Warranty not applicable on battery, power cable and adaptor.\n" +
+                    "7) ACH will be effective only for advance rent expired cases and for monthly rentals. The frequency of the ACH will be as " +
+                    "per the selection in the merchant in ACH.\n" +
+                    "8) INR 500+GST will be levied towards cancellation charges for devices cancelled by the merchant";
+
+            PdfPTable newTable7 = new PdfPTable(1);
+            newTable7.setWidthPercentage(100);
+            newTable7.setWidths(new float[]{1});
+            newTable7.addCell(getRowCellWithoutBorderSize8(text2));
+            newTable7.addCell(getRowCellWithoutBorderSize8(" "));
+            newTable7.addCell(getRowCellWithoutBorderSize8(" "));
+            newTable7.addCell(getRowCellWithoutBorderSize8(" "));
+            newTable7.addCell(getRowCellWithoutBorderRightAlign("Merchant Signature:......................."));
+
+            document.add(newTable7);
+
+
+            document.newPage();
+            PdfPTable table6 = new PdfPTable(1);
+            table6.setWidthPercentage(100);
+            table6.setWidths(new float[]{1});
+            table6.addCell(getHeaderWithCenterAlign("Best Practices"));
+//            document.newPage(); //new page
+            document.add(table6);
+
+            PdfPTable table9 = new PdfPTable(1);
+            table9.setWidthPercentage(100);
+            table9.setWidths(new float[]{1});
+            table9.addCell(getSubHeaderwithLeftAlignWithBold("Do's:"));
+            document.add(table9);
+
+            Font normalFont = FontFactory.getFont(FontFactory.TIMES_ROMAN, 8, BaseColor.BLACK);
+            String content1 =
+                    "• Check card plastic for any abnormalities, Verify for Visa/Master/Maestro/Rupay emblem, logo, pre-printed bank name & validity of the card before the transaction.\n" +
+                            "• For Transaction exceeding Rs.50,000 PAN card copy of the customer is mandatory.\n" +
+                            "• Make invoice with all terms and conditions printed and get invoice & Charge slip signed from cardholder for all transactions and retain the merchant copy.Verify, Collect & retain cardholder's documents for all transactions.\n" +
+                            "• Submit the required documents to bijlipay upon request wherever the amount is withheld in risk triggers so as to enable/release such withheld payments.\n" +
+                            "• Notify us of the changes in your Business model/Mode of Ownership/Business registered address if any for smooth functioning of the business.\n" +
+                            "• Do communicate with us immediately if you are changing your email id ,mobile number & bank account details for uninterrupted services and h\n" +
+                            "• Return the mPOS/GPRS/Android terminal to Bijlipay office immediately on discontinuation of the Merchant agreement.\n" +
+                            "• Ensure that the transaction is complete/successful before rendering the services to the customer.\n";
+            Paragraph paragraph1 = new Paragraph(content1, normalFont);
+            document.add(paragraph1);
+
+            PdfPTable table10 = new PdfPTable(1);
+            table10.setWidthPercentage(100);
+            table10.setWidths(new float[]{1});
+            table10.addCell(getSubHeaderwithLeftAlignWithBold("Don'ts:"));
+            document.add(table10);
+
+//            String content2 = "Don't :\n";
+//            paragraph.add(content);
+            String content2 = "• Do not process your own credit/debit cards on your own MPOS/POS/ANDROID terminals. \n" +
+                    "• Do not accept white plastic card without logo of bank/MasterCard/Visa/Maestro/Rupay/Amex\n" +
+                    "• Do not split the amount / or do not encourage multiple swipes for single amount transaction\n" +
+                    "• Do not accept sensitive credit card information via e-mail or other electronic format (i.e., Chat Windows)\n" +
+                    "• Do not process the refund of a transaction through any of the modes mentioned below to the customer (Cash, Cheque, Online transfer, NEFT or RTGS). Refunds should be processed only to the" +
+                    "card which was used for purchase swipe through the aggregator. (Any violation on this may lead to disputes)\n" +
+                    "•Do, not handover your MPOS/POS/ANDROID terminal for anyone else to use\n" +
+                    "• Do not provide CASH against Credit/Debit/Prepaid/Gift cards - Unless registered specifically to provide such services\n" +
+                    "• Do not charge the customer MDR/service charge for using the card for payment.\n";
+            Paragraph paragraph2 = new Paragraph(content2, normalFont);
+            document.add(paragraph2);
+
+            PdfPTable table10A = new PdfPTable(1);
+            table10A.setWidthPercentage(100);
+            table10A.setWidths(new float[]{1});
+            table10A.addCell(getRowCellWithoutBorderRightAlign("Merchant Signature:......................."));
+            document.add(table10A);
+
+            PdfPTable table8 = new PdfPTable(1);
+            table8.setWidthPercentage(100);
+            table8.setWidths(new float[]{1});
+            table8.addCell(getHeaderWithLeftAlign("OFFICE USE"));
+            document.add(table8);
+
+            String content3 = "We have visited the place of business of the member establishment and recommend for enrichment, against the following confirmation:";
+            Paragraph paragraph3 = new Paragraph(content3, normalFont);
+            document.add(paragraph3);
+
+            PdfPTable table11 = new PdfPTable(6);
+            table11.setWidthPercentage(100);
+            table11.setWidths(new float[]{0.09f, 2, 0.09f, 1, 0.09f, 0.91f});
+            table11.addCell(getCheckBox1());
+            table11.addCell(getCellwithLeftAlign("Proper Verification done"));
+            table11.addCell(getCheckBox1());
+            table11.addCell(getCellwithLeftAlign("Merchant Agreement"));
+            table11.addCell(getCheckBox1());
+            table11.addCell(getCellwithLeftAlign("OSV Done"));
+            document.add(table11);
+
+            PdfPTable table12 = new PdfPTable(5);
+            table12.setWidthPercentage(100);
+            table12.setWidths(new float[]{0.09f, 2, 0.09f, 1, 1});
+            table12.addCell(getCheckBox1());
+            table12.addCell(getCellwithLeftAlign("Communicated monthly Rental/MDR Charges"));
+            table12.addCell(getCheckBox1());
+            table12.addCell(getCellwithLeftAlign("Documents Collected"));
+            table12.addCell(getCellwithLeftAlign(" "));
+            document.add(table12);
+
+            PdfPTable table13 = new PdfPTable(5);
+            table13.setWidthPercentage(100);
+            table13.setWidths(new float[]{0.09f, 2, 0.09f, 1, 1});
+            table13.addCell(getCheckBox1());
+            table13.addCell(getCellwithLeftAlign("Demo Done"));
+            table13.addCell(getCheckBox1());
+            table13.addCell(getCellwithLeftAlign("Do's and Don's shared"));
+            table13.addCell(getCellwithLeftAlign(" "));
+            document.add(table13);
+
+            if (leadInfo.getCreatedBy() != null && leadInfo.getCreatedBy().getName() != null) {
+                String content4 = "Credit to OD and Account NO\n" +
+                        "We confirm that we have checked and verified all the details given in this form.\n\n" +
+                        "Name of the Sales Executive\n" +
+                        "SO Name  :" + leadInfo.getCreatedBy().getName() + "\n\n";
+                Paragraph paragraph4 = new Paragraph(content4, normalFont);
+                document.add(paragraph4);
+            } else {
+                String content4 = "Credit to OD and Account NO\n" +
+                        "We confirm that we have checked and verified all the details given in this form.\n\n" +
+                        "Name of the Sales Executive\n" +
+                        "SO Name  :" + "\n\n";
+                Paragraph paragraph4 = new Paragraph(content4, normalFont);
+                document.add(paragraph4);
+            }
+
+            PdfPTable table14 = new PdfPTable(1);
+            table14.setWidthPercentage(100);
+            table14.setWidths(new float[]{1});
+            table14.addCell(getHeaderWithLeftAlign("MERCHANT DECLARATION"));
+            document.add(table14);
+
+            String content5 = "We request to accept MDR/Commission Debit Card/Credit Card + application taxes for mPOS/POS\n" +
+                    "We hereby confirm that all information given to SKILWORTH TECHNOLOGIES Pvt.Ltd., in this form is correct and accurate and agree to have an acquiring relationship with\n\n";
+            Paragraph paragraph5 = new Paragraph(content5, normalFont);
+            document.add(paragraph5);
+
+            Font boldFontSize10 = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD); // Create a font with bold style
+            String content6 = "SKILWORTH TECHNOLOGIES Pvt.LTD";
+            Paragraph paragraph6 = new Paragraph(content6, boldFontSize10);
+            document.add(paragraph6);
+
+            String content7 = "Corporate office:Chaitanya 'Exotica' 9th floor,\n" +
+                    "New No.51 Venkatanarayana Road,\n" +
+                    "T.Nagar, Chennai - 600 017, Phone:+91 44 4605 9500\n" +
+                    "Tollfree 1800 4200 235\n" +
+                    "E-mail: service@bijlipay.co.in\n" +
+                    "Registered office: No.20C/2A Sarangapani Street, Chennai - 600 017\n\n" +
+                    "I consent to Skilworth Technologies Pvt Ltd (Bijlipay) to communicate with me on Whatsapp\n" +
+                    "I further confirm that read and understood rules applicable for merchant establishment & also acknowledge that I was trained to" +
+                    "use the App and device. I have confirm the receipt of copy of Do's and Don'ts for merchant establishment, most important safe card" +
+                    "Acceptance & Procedure / GuideLines & mPOS/POS features accordingly.\n\n\n\n";
+            Paragraph paragraph7 = new Paragraph(content7, normalFont);
+            document.add(paragraph7);
+
+            PdfPTable table16 = new PdfPTable(3);
+            table16.setWidthPercentage(100);
+            table16.setWidths(new float[]{1, 1, 1});
+            table16.addCell(getRowCellwithLeftAlign("Place :"));
+            table16.addCell(getRowCellwithLeftAlign(" "));
+            table16.addCell(getRowCellwithCenterAlign("your faithfully"));
+            document.add(table16);
+
+            PdfPTable table18 = new PdfPTable(3);
+            table18.setWidthPercentage(100);
+            table18.setWidths(new float[]{1, 1, 1});
+            table18.addCell(getRowCellwithLeftAlign("Date :"));
+            table18.addCell(getRowCellwithLeftAlign(" "));
+            table18.addCell(getRowCellwithLeftAlign("Partners Director/Authorized Signatory"));
+            document.add(table18);
+
+            Font boldFont1 = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD); // Create a font with bold style
+            String content8 = "MERCHANT SERVICE AGREEMENT\n";
+            Paragraph paragraph8 = new Paragraph(content8, boldFont1);
+            paragraph8.setAlignment(Element.ALIGN_CENTER);
+            document.newPage();
+            document.add(paragraph8);
+
+            Font normalFontSize8 = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL); // Create a font with Normal style
+            String content9 = "This Merchant Services Agreement (the \"Agreement\") is entered into at Chennai on the day and date " +
+                    "(\"Execution Date\") specified in the application form appended to this Agreement (\"Application Form\") By And" +
+                    " Between, the merchant (details furnished in the Application Form), a sole proprietorship/partnership firm registered" +
+                    " under the provisions of the Indian Partnership Act/limited liability partnership/company incorporated under " +
+                    "the Companies Act, 1956/2013/ An Individual having its office at the address as specified in Application Form" +
+                    " (hereinafter referred to as \"Merchant\"/\"Merchant Establishment\" / \"ME\", which expression shall unless repugnant" +
+                    " to the subject or context shall mean and include (i) in the case of the Merchant being a sole proprietary " +
+                    "concern/individual, the heirs, administrators, executors, legal representatives and permitted assigns of the Proprietor;" +
+                    " (ii) in the case of the Merchant, being a partnership firm, the partners for the time being and from " +
+                    "time to time of the firm, the survivor or survivors of them, their respective heirs, administrators, executors," +
+                    " legal representatives and permitted assigns and (iii) in the case of the Merchant, being a company, its successors " +
+                    "and permitted assigns (iv) in the case of the Merchant being a Trust, the trustees from time to time" +
+                    " of the trust, administrators, beneficiaries and the survivor or survivors of them, executors, legal representatives and " +
+                    "permitted assigns (as the case may be) of the One Part, And Skilworth Technologies Private Limited having its registered" +
+                    " office at No 20C/2A Sarangapani Street, T. Nagar, Chennai-600017 and corporate office at Chaitanya \"EXOTICA\". 9th Floor," +
+                    " New No 51, Venkatnarayana Road. T Nagar, Chennai-600017 (hereinafter referred to as the \"STPL\", which expression " +
+                    "shall unless repugnant to the subject or context shall mean and include its successors and assigns) of the Second Part and_________a " +
+                    "private limited Company within the meaning of Companies Act, 2013 having its registered office at _________________________" +
+                    "(hereinafter referred to as the \"Referral Partner\", which expression shall, unless repugnant to the context" +
+                    "meaning thereof, be deemed to and include its successors and permitted assigns)" +
+                    "(STPL, and the Merchant referred to as a \"Party\" and collectively as the \"Parties\")\n\n";
+            Paragraph paragraph9 = new Paragraph(content9, normalFontSize8);
+            document.add(paragraph9);
+
+            PdfPTable pTable31 = new PdfPTable(4);
+            pTable31.setWidthPercentage(100);
+            pTable31.setWidths(new float[]{1, 1, 1, 1});
+
+            String columnA = "WHEREAS:\n" +
+                    "A. Merchant is inter alia engaged in the business as stated in the Application Form (\"Business\")\n" +
+                    "B. STPL is engaged in the business of providing software application programming interfaces and other proprietary technology to provide and enable payment processing services to merchants including but not limited to providing point of sale card machines, facilitating payment by merchant's customers using payment instruments, collection of such payments and onward remittance of such payments to the merchants and other values added services, more specifically set Forth in Schedule A hereto (\"Payment Services\")\n" +
+                    "C. The Referral Partner is inter alia engaged in the business of referral partnering.\n" +
+                    "The Referral Partner has referred the Merchant to STPL for providing the services offered by STPL.\n" +
+                    "D. The Merchant is desirous of availing the Payment Services of STPL for enabling electronic payment acceptance transactions of its Customers.\n" +
+                    "NOW THEREFORE it is acknowledged by and agreed between the Parties hereto as follows\n\n" +
+                    "E. Based on the representations, warranties and covenants provided by the Merchant and the Referral Partner, STPL has agreed to provide the Payment Services.\n" +
+                    "NOW\n" +
+                    "THEREFORE it is acknowledged by and agreed between the Parties hereto as follows:\n" +
+                    "1. DEFINITIONS\tAND\n" +
+                    "INTERPRETATIONS\n" +
+                    "Definitions: In addition to the terms defined in the introduction to this Agreement and other parts of this Agreement," +
+                    " wherever used in this Agreement, unless repugnant to the meaning or context thereof, the following expressions shall" +
+                    " have the meanings set forth below:\n" +
+                    "(1)Affiliate: in case of a Party being a body corporate, any entity that directly or indirectly controls, is " +
+                    "controlled by, or is under the common control of that Party, (2) Authentication: shall mean the process by which " +
+                    "Cardholder identification is authenticated in the Processing Mechanism; (3) Authorization: shall mean the process by " +
+                    "which a bank approves a Transaction as stipulated by the Issuer from time to time\n" +
+                    "(i.e. whether the Valid Card of the Card Holder has the required credit";
+            pTable31.addCell(getRowCellwithJusifyAlign(columnA));
+            String columnB = " limit/funds (as the case may be) to make " +
+                    "payments for a Transaction), and includes approval delivered on the Equipment at the Premises An Authorization indicates only the availability of the Cardholder's credit limit at the time the Authorization is requested and is not a guarantee that a Transaction is valid;(4) Bank means Bank, with whom STPL is the Merchant of Record; (5) Batch means a single submission of Transaction(s) for settlement by the Merchant A batch usually re-presents " +
+                    "a day's worth of Transactions or Transactions worth between two batches, if Merchants are provided with the facility " +
+                    "to settle multiple batches during the day; (6) Card: means a credit, debit or any other payment card issued by an " +
+                    "Issuer; (7)Card Association(s): Card Association(s) shall mean any of VISA, MasterCard, NPCI, Amex, Maestro, Rupay," +
+                    " Diners, Discover or any other card association as may be specified by STPL\n from time to time; (8) Cash @ POS/Cash\n" +
+                    "withdrawal @ POS means payment or cash by the Merchant to the Card Holder as per the RBI Guidelines, such guidelines " +
+                    "being subject to change from time to time; (9) Card Holder/Customer: means a person to whom a Valid Card is issued or" +
+                    " who is authorized to use that Valid Card and utilizes the same while availing services or products of the Merchant " +
+                    "vide the Payment Services; (10) Charge slip: shall mean receipt produced electronically or manually as applicable by " +
+                    "any and all type of POS i.e. Digital / Paper GPRS and mPOS on completion of Authorization of a Valid Card transaction," +
+                    " (11) Chargeback: shall mean a transaction that refers to the reversal of any transaction on account of (i) any " +
+                    "alleged forgery of the Card or other details (ii) any charge/debit made on a Card that has been listed as a hot listed" +
+                    " card or otherwise listed on the Card Association warning bulletins\n" +
+                    "(iii)\tduplicate processing of the Transaction,\n" +
+                    "(iv)\tany amount required to be refunded due to. denial of Transaction by the Customer as wrongly charged payment! " +
+                    "extra payments and/or due to the fraudulent use/service related/quality\trelated/misuse\tof the \n" +
+                    "personal and financial information of the Customer by any unauthorized person, and ( v) subject to applicable law, any other dispute received from";
+            pTable31.addCell(getRowCellwithJusifyAlign(columnB));
+            String columnC = "any other dispute received from bank/ Card Association/Service Provider, business associate or circumstance that may result in the existence of a claim For reversal of any Transaction as determined reasonably by STPL; (12) Confidential Information: shall mean any documents, data, or information related to each Party's business and/or the Customer that is not generally known to the public including, but not limited to, all tangible," +
+                    "intangible, visual, electronic, present, or future information such as (a) financial information;(b) technical information, including but not limited\tto\tresearch,\tdevelopment, \nprocedures, data, designs, and technical know-how; (c) business information, including but not limited to operations," +
+                    " planning, marketing interests, and services (d) personal information/data of any customers (e) all information or" +
+                    " data which the Parties have access to in connection with performance of the present Agreement, whether before or " +
+                    "after execution of the present Agreement (f) all confidential or proprietary\tconcepts,\tdocumentation, \n" +
+                    "reports, lists, files, data, specifications, software, source code, object code, flow charts, databases, data files, " +
+                    "inventions, information, know-how and trade secrets, whether or not patentable or copyrightable. (13) Data Plan: " +
+                    "means the service provided by a third party that enables the transfer of data over its network ME is responsible" +
+                    " for paying for any charges associated with this service (14) Fees: shall mean such fee that has been agreed between " +
+                    "the Parties payable by the Merchant to STPL for Payment Services, and as detailed in Schedule A hereto; (15) Issuer: " +
+                    "means a licensee of a Card Association issuing a Card; (16) ME Commission / Merchant Discount Rate (MDR): means the" +
+                    " commission payable to STPL by Merchant Establishment (-ME\") for facilitating a Transaction; (17) Mobile Device: " +
+                    "means any smart mobile phone or tablet enabled with android or any other\n" +
+                    "compatible operating system with Bluetooth connectivity compatible with the device provided to the ME by STPL, " +
+                    "(18) Mobile Point of Sale or mPOS\": means a Mobile Device with card-acceptance and software application installed " +
+                    "on it; (19) Payment Channels: shall mean the routing mechanism vide which the Payment Services are rendered in respect of the Payment Modes processed on the Equipment, (20)";
+            pTable31.addCell(getRowCellwithJusifyAlign(columnC));
+            String columnD = " Payment Modes: shall mean payment via credit cards, debit cards, pre-paid cards, EMI, UPI, AEPS, Bharat QR, Adhaar Pay, MOTO or any other payment mode as applicable; (21) PADSS: means Payment Application Data Security Standard Council; (22) PCIDSS: means Payment Card Industry Data Security Standards being an information security standard defined by the Payment Card Industry Security Standards Council; (23) Point of Sale or POS: means the EDC Terminal at the Premises, used for accepting the Payment Modes," +
+                    "(24) Premises: shall mean the place of business of the ME as stated in the Application Form;(25) QR Services: shall mean the QR services to be provided by STPL to ME either dynamic which shall be " +
+                    "included in the POS Terminal or as static which shall be a sticker based QR Service; (26)Rules: means the rules, " +
+                    "by laws, operating regulations, guidelines,\n" +
+                    "procedures and also amendments, interpretations, or modifications issued by the Payment Gateway Networks, Card " +
+                    "Associations, Reserve Bank of India and any other governmental authorities that govern the usage and acceptance " +
+                    "of Cards or are otherwise applicable to the Merchant services or Payment Service including but not limited to PCIDSS; " +
+                    "(27) Refund(s): means the amount to be repaid by ME to Card Holder for reasons set out in Clause  7 2; (28)Service" +
+                    " Providers: shall mean banks, financial institutions, white labeled solution providers or aggregators, software " +
+                    "providers, third party service providers and any other person authorized to issue or process payments or any persons " +
+                    "acting on their behalf, and in case of specific MPOS devices/GPRS terminals provided by STPL; (29) Trade Marks means " +
+                    "(a) all trademarks and service marks, whether they are registered, unregistered or pending registration, in India" +
+                    " and/ or the rest of the world, that are owned by, used by or applied for, and includes the trademark and service " +
+                    "marks in the representation, form and manner therein, (b) all common law rights in the words and names in India or" +
+                    " anywhere else in the world; and (c) all rights to bring an action for passing off, infringement or any other action" +
+                    " in respect thereto; (30)Transaction: shall mean a financial transaction conducted by the Customer using Payment Services for the purchase/rental of goods and/or services, resulting in the generation";
+            pTable31.addCell(getRowCellwithJusifyAlign(columnD));
+            document.add(pTable31);
+
+//            PdfPTable signTable2 = new PdfPTable(1);
+//            signTable2.setWidthPercentage(100);
+//            signTable2.setWidths(new float[]{1});
+//            signTable2.addCell(getRowCellWithoutBorderRightAlignSize8("Accepted,\n.......................(Sign and stamp of the Merchant)"));
+//            document.add(signTable2);
+
+            PdfPTable table19 = new PdfPTable(4);
+            table19.setWidthPercentage(100);
+            table19.setWidths(new float[]{1, 1, 1, 1});
+            String column1 = " of a Chargeslip, (31)POS/EDC/Terminal/Equipment: shall mean point of sale electronic data capture devices referred as mPOS & Digital POS, printers and other peripherals and accessories, including pin pads and necessary applications and software to run the devices in respect of or in connection with regard to all EDC devices (Incised and or purchased) provided " +
+                    "by STPL or its Service Providers, (32)Valid Card shall\nmean a Card issued by an Issuer,bearing signature of the holder whose name is embossed on the same but shall not include (i) a card listed on any communication from the Card " +
+                    "Association or STPL informing the Merchant of any lost, stolen, invalid and cancelled cards or (ii) an expired card " +
+                    "or a card not yet operational or (iii) a card that cannot be used in India or (iv) a damaged or torn card 2.SCOPE OF THE AGREEMENT:\n" +
+                    "2.1 Vide execution of the Application Form and this Agreement, the Merchant offers to receive and, subject to acceptance of the offer by" +
+                    " STPL and the payment of the relevant fees and charges by the Merchant, the Merchant agrees to avail Payment Services on the terms " +
+                    "set out in this Agreement and agrees to comply with all the terms and conditions provided in this Agreement and other applicable" +
+                    " laws including but not limited to the Rules, directives, notifications issued by the regulatory authorities from time to time" +
+                    " It is hereby clarified that STPL in its sole discretion reserves the right to accept or reject the Merchant's application\n" +
+                    "2.2 Exclusive Provider The Merchant hereby agrees and acknowledges that during the Term (as defined hereinafter) of this Agreement, " +
+                    "the Merchant shall avail Payment Services solely from STPL The Payment Services shall be performed by STPL directly or by any of " +
+                    "its Affiliates and/or Service Providers The Affiliates and/or Service Providers may also assist in provision of the Equipment and " +
+                    "local support functions in connection with this Agreement\n" +
+                    "2.3 Nothing in this Agreement shall prohibit STPL from providing services similar to those provided under this Agreement to others," +
+                    " including competitors of the Merchant\n" +
+                    "2.4 STPL may offer additional services as may be decided by STPL from time to time (\"Additional Services\"), to the Merchant " +
+                    "If the Merchant agrees to avail one or more Additional Services, the terms and conditions of the same shall be set forth in writing" +
+                    " and considered as an addendum to this Agreement For any customization or modification required in Payment Services, the Merchant " +
+                    "shall pay per man day or as may be mutually agreed between the Parties in writing The Parties hereby agree that STPL reserves the " +
+                    "right to modify, alter and impose additional terms and conditions as may be decided by STPL at its sole discretion and the same " +
+                    "shall be effective and binding on the Merchant\n" +
+                    "2.5 Branding/Promotion:\tMerchant\n" +
+                    "shall indicate the Card(s) accepted and display the Card logos, STPL Trademarks and other materials in its Premises STPL " +
+                    "grants a non-exclusive, limited, revocable. non-transferable and non-sublicensable license to use, display and reproduce the" +
+                    " Trademarks and logos of STPL ";
+            table19.addCell(getRowCellwithJusifyAlign(column1));
+
+            String column2 = "solely in connection with the performance of Merchant obligations and provisions of the services in accordance with the term and conditions of the Agreement During the Term of this Agreement, Merchant shall make no other" +
+                    " use of the emblems or Trademarks of any Card Association or STPL without STPL's prior written consent and shall use these logos or Trademarks in compliance with the requirements of the Rules" +
+                    " arid the specifications of STPL Merchant shall immediately discontinue use of all such Trademarks, logos, emblems or names upon " +
+                    "(a) direction of STPL, or (b) termination of this Agreement STPL shall be entitled to use details of the Merchants in " +
+                    "any promotional materials\n" +
+                    "2.6 Equipment In order to process Transactions, Merchant must be equipped with properly installed and programmed Equipment capable of transmitting,\n" +
+                    "receiving and communicating Card transaction data Merchant may purchase or lease such Equipment lithe Merchant elects " +
+                    "to lease the Equipment, the lease of the Equipment shall be subject to the terms of this Agreement The Merchant agrees " +
+                    "that the Equipment shall remain in the Premises at all times and the Merchant shall not create any encumbrance on the" +
+                    " same and the Equipment shall not be pledged, sold or transferred by the Merchant Any leased or rented Equipment " +
+                    "provided by STPL are for the Merchant's exclusive use and will not become Merchant's property, and shall be returned" +
+                    " to STPL on demand, upon termination of this Agreement or upon Merchant ceasing to do Business, whichever is the" +
+                    " earliest The operating instructions provided by STPL (or as explained by its authorized representatives) will explain " +
+                    "to the Merchant, the manner of proper use of the Equipment and the Merchant shall use and operate the Equipment only " +
+                    "in such manner as provided therein Merchant shall be liable to protect the Equipment from loss, theft, damage or any " +
+                    "legal encumbrance and will allow STPL and its designated representatives reasonable access to Premises for their repair," +
+                    " servicing. replacement, removal, modification, installation and relocation\n" +
+                    "2.7 Merchant acknowledges that some Equipment provided under this Agreement is embedded and/or integrated with " +
+                    "proprietary technology owned by or licensed to STPL (\"Software\") In connection with availing the Payment Services, " +
+                    "the Merchant hereby agrees to the installation of Software and hardware solutions to integrate the Merchant's billing " +
+                    "system with the Equipment, the costs of which shall be borne solely by the Merchant Merchant shall not obtain title, " +
+                    "copyrights or any other proprietary right to any Software At all times, STPL or its licensors retain all rights to such " +
+                    "Software, including but not limited to updates, enhancements and additions Merchant shall not disclose such Software to " +
+                    "any party, convey, copy, license, sublicense, modify, translate, reverse engineer, decompile, disassemble, tamper with," +
+                    " or create any derivative work based on such Software Merchant's use of such Software shall be limited to that expressly" +
+                    " authorized by STPL STPL's licensors are intended third party beneficiaries of this Agreement to the extent of any terms" +
+                    " herein";
+            table19.addCell(getRowCellwithJusifyAlign(column2));
+
+            String column3 = " pertaining to such licensors' ownership rights If Merchant provides any software or equipment or utilizes third" +
+                    " party system vendors, Merchant is solely responsible For all aspects of compatibility, installation. operation, " +
+                    "security and systems integrations that will comply with the Rules and STPL's processing requirements\n" +
+                    "2.8 Merchant also acknowledges that merchant is solely responsible for any services, software and hardware offered" +
+                    " by the referral partner and do for hold STPL liable any deficiency of the services or any charges, fees levied by the referral partner." +
+                    "3. PAYMENT SERVICES:\n" +
+                    "3.1 STPL facilitates payments made by Customers through any of the Payment Modes vide the Payment Channels and " +
+                    "provides technological and payments support in relation to Transactions, so as to enable receipt of such payments by " +
+                    "the Merchant In this regard, the ME shall procure a Data Plan required to complete the Transactions, at its own costs" +
+                    " In the event the SIM for the Data Plan is provided by STPL,the Merchant shall be in compliance with the declaration stated in Clause 6.1(d)  at all times, during the" +
+                    " Term of this Agreement\n" +
+                    "3.2 To enable the provision of Payment \n" +
+                    "Services, the Merchant shall be provided \n" +
+                    "with\ta\t'merchant\tcode/merchant\n" +
+                    "identification number' or Terminal Identification number, obtained by STPL directly from the Bank or through its Service Provider\n" +
+                    "3.3 The procedure to be followed by ME for every Transaction and the process flow for Authorization and settlement of a" +
+                    " Transaction is outlined herein https://bijlipay.co.in/referencepage.php. The Merchant agrees and acknowledges that" +
+                    " in processing the Transactions, STPL shall be entitled to rely upon all electronic communications, orders or messages" +
+                    " sent to STPL through the Payment Channels and STPL shall not be obligated to verify or make further inquiry into the" +
+                    " identity of the sender, or the message integrity, of any communications, orders or messages The Merchant shall under " +
+                    "no circumstances dispute such reliance by STPL. STPL shall not be bound by or obligated to act, on any electronic " +
+                    "communications, orders or messages received on-line, from the Merchant or the Customer, which do not properly utilize " +
+                    "the security measures, as may be applicable from time to time\n" +
+                    "3.4 As and when STPL, requests for a particular document, bills/invoices, proof of delivery or any other supporting " +
+                    "documents, the same shall be handed use' to STPL, within two (02) days of the request If on account of non-compliance," +
+                    " STPL, or its Affiliate or Service Provider incurs any loss, the same shall be made good by the Merchant, inclusive of" +
+                    " all charges, interest and costs\n" +
+                    "3.5 Merchant agrees that any charges accepted by Merchant, which prove to be uncollectable, shall be the exclusive " +
+                    "financial responsibility of the Merchant alone The Merchant gees to such charges or the Chargeback of such uncollectable" +
+                    " charges (as the case torn, be) by STPL, or its Affiliate or Service Provider without any demur or protest\n" +
+                    "3.6 The Merchant acknowledges that STPL, its Affiliate or Service Provider is entitled to exercise its right to set " +
+                    "off/lien on the credit";
+            table19.addCell(getRowCellwithJusifyAlign(column3));
+
+            String column4 = " value in the account of the Merchant or the unsettled transactions in the event of Failure by the Merchant in providing necessary, valid proof of Transaction to the retrieval request/Chargeback/suspicious +\n" +
+                    "Transaction received from the Issuer through the Card Associations\n" +
+                    "3.7 STPL with or without intimation, shall be entitled to disclose any and all information concerning the Agreement and" +
+                    " transactions of the Merchant, within the knowledge and possession of STPL, to any regulator, RBI, Card Associations " +
+                    "or law enforcement agencies, in connection with this Agreement\n" +
+                    "3.8 The Payment Services are provided on an \"as is- and \"as available\" basis ALL OTHER EXPRESS OR IMPLIED " +
+                    "REPRESENTATIONS, WRITTEN OR ORAL, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF MERCHANTABILITY OR FITNESS FOR A " +
+                    "PARTICULAR PURPOSE, WITH RESPECT TO ANY EQUIPMENT AND/OR PAYMENT SERVICES ARE HEREBY EXCLUDED\n" +
+                    "4. FEES FOR PAYMENT SERVICES: 4.1 The Merchant agrees to pay to STPL\n" +
+                    "(i) The fees and charges (\"Fees\") as \n" +
+                    "stipulated in Schedule A attached hereto this\nAgreement. along with any other sums including but not limited to, " +
+                    "reimbursable expenses for the implementation of the Payment Services, ( ii) any and all applicable statutory taxes, " +
+                    "including without limitation, any direct or indirect tax, (iii) any additional fees or pricing set out in the Transaction" +
+                    " 4.2 STPL shall have the right to vary the Fees specified in this Clause 4 at any time after the Execution Date, subject" +
+                    " to prior written intimation to ME, without having to amend this Agreement or related documents Utilizing the Payment " +
+                    "Services subsequent to any such revisions to the Fees shall constitute deemed acceptance of the revised Fees by the ME\n" +
+                    "4.3 Wherein ME leases the Equipment from STPL, ME agrees to pay to STPL (i) the amount set out as rental fees in Gold " +
+                    "plan and Freedom plan -of the amount received from the merchant 90% will be offset against one time setup and " +
+                    "installation fee, balance 10% against advance rental of all the frequency stated therein: and (ii) all other fees and/or" +
+                    " levies as agreed by ME to be paid to STPL on account of SMS (short messaging service charges), bank transfer charges " +
+                    "and such other charges levied by STPL\n" +
+                    "4.4 Wherein ME procures the SIM for the Data Plan from STPL, ME agrees to pay to STPL the amount set out as SIM charges in Schedule A\n" +
+                    "4.5 It is hereby agreed and acknowledged by the Parties that any Fees charged by STPL shall not be repaid or refundable\n" +
+                    "4.6 STPL shall be entitled to modify the mode of payment / the payment procedure and shall also be entitled to " +
+                    "modify its payment mechanism, from time to time, in such mariner as it may deem fit\n" +
+                    "4.7 Merchant authorizes STPL to deduct fees/fines/charges/insurance costs/expenses/all costs on account of this business engagement, from the transaction settlement basis the\n" +
+                    "instructions received from the referral partner." +
+                    "5. CHARGES AND SETTLEMENT OF ACCOUNTS:\n" +
+                    "5.1 The Merchant hereby directs and";
+            table19.addCell(getRowCellwithJusifyAlign(column4));
+            document.add(table19);
+
+            PdfPTable table20 = new PdfPTable(4);
+            table20.setWidthPercentage(100);
+            table20.setWidths(new float[]{1, 1, 1, 1});
+            String column5 = " authorizes STPL, to receive, hold, disburse and settle the Customer charges in accordance with the provisions of this Agreement STPL shall endeavor to instruct the bank to transmit the settlement all amount less applicable security deposit, Fees, charges and adjustments of any nature and the Merchant further " +
+                    "acknowledges that the settlement amount paid to the Merchant will be subject to reconciliation by STPL, its Affiliate" +
+                    " or Service Provider The transfer of the Customer's payment to the Merchant by STPL, its Affiliate or Service Provider," +
+                    " for the Payment Services, shall be governed by the following terms:\n" +
+                    "a) Subject to applicable law, payments shall be made available by STPL, its Affiliate or Service Provider, to the " +
+                    "Merchant after making the following adjustments, deductions and any other deductions in terms of this Agreement from " +
+                    "the amount of the Transaction (subject to the limns volumes limits allowed lo the Merchant)\n" +
+                    "(i)\tthe consideration/fees, the TDR /MDR along with other dues, fees, charges, out of pocket expenses, etc , due to " +
+                    "ST PL in terms of Schedule A of this Agreement or at any other rates and percentage as amended from time to time for " +
+                    "all Transactions processed or services rendered such as installation, setup, maintenances, settlement fees, reports " +
+                    ",Per transaction fee, training fee,\tcontact\tcenter\tsupport\tfees, \n" +
+                    "reconciliation services or any other fees for services rendered from time to time;\n" +
+                    "(ii)\tthe sum of all Customer charges denied, refused, or charged back by the Customer/partner banks;\n" +
+                    "(iii)\tall costs, charges, expenses, etc , of whatsoever nature on account of, inquiries, disputes, cancellations " +
+                    "and/or refunds processed on account of Merchant's\n Customer charges and/or Chargebacks (refunds. chargeback recovery" +
+                    " shall be done at gross amount. If any convenience fees are applicable or exchange rate fluctuations, the same shall " +
+                    "he borne by the Merchant)\n" +
+                    "(iv)\tany taxes, including but not limited to, service tax, education cess, GST, direct & indirect Taxes as may be " +
+                    "applicable, penalties,\tcharges\tor\tother\titems, \n" +
+                    "reimbursable under any of the provisions of this Agreement, or otherwise, occurring in any mariner whatsoever\n" +
+                    "b)\tSTPL, its Affiliate or Service " +
+                    "Provider, shall reconcile the accounts and make payments to the Merchant subject to the right of STPL, its Affiliate" +
+                    " or Service Provider, to withhold payments of the amount arrived at, for any charges of Chargeback recovery/debits " +
+                    "that may be fraudulently\tincurred/suspicious \n" +
+                    "transactions or for any reason whatsoever either in terms of this Agreement or otherwise to the extent and as" +
+                    " permissible under applicable law STPL, its Affiliate or Service Provider, shall\trelease such \n" +
+                    "payments withheld for any charges/debits fraudulently incurred once determined at STPL's, its Affiliate's or Service " +
+                    "Provider's, sole discretion that such charge/debit is in fact a valid charge and STPL, shall not be liable for any " +
+                    "penalty/interest on account of the same Merchant shall indemnify STPL, of any losses suffered by STPL, in the event" +
+                    " that STPL is unable to withhold payment";
+            table20.addCell(getRowCellwithJusifyAlign(column5));
+            String column6 = " in respect of suspected fraudulent charge/debit, provided however that, STPL shall be entitled to set-off any such claims against the security deposit or to otherwise require the Merchant to make corresponding payments to STPL, not later than two (02) days from the date of the Merchant being notified\n" +
+                    "c)\tInterest: STPL, its Affiliate or \n" +
+                    "Service Provider, shall be entitled to charge interest at the rate of 2% above the \"prime lending rate\" as published" +
+                    " by the Reserve Bank of India or such other charges as notified to ME on amounts outstanding to STPL, its Affiliate or " +
+                    "Service Provider\n" +
+                    "d)\tThe Parties hereby agree and \n" +
+                    "acknowledge that, irrespective of any payment made by STPL, its Affiliate or Service Provider, to the Merchant," +
+                    " the same shall be made. without prejudice to any claims, or rights, that STPL, its Affiliate or Service Provider," +
+                    " may have, against the Merchant and such payments, shall not constitute any admission by STPL, its Affiliate or Service" +
+                    " Provider, as to the performance, by the Merchant of its obligations, under this Agreement and the amount payable to the" +
+                    " Merchant\n" +
+                    "5.2 If deemed necessary by STPL, its Affiliate or Service Provider, the Merchant shall provide such further assurances," +
+                    " guarantees or security, as required by STPL its Affiliate or Service Provider, from time to time In the event any such " +
+                    "security deposit is provided, STPL, its Affiliate or Service Provider, shall have the right, to set off claim amounts, " +
+                    "against the said security deposit, in the event of (i) any material breach of the terms of this Agreement (ii) STPL, " +
+                    "its Affiliate or Service Provider, is unable to withhold payment in respect of suspected fraudulent charge/debit or" +
+                    " ( iii) due to the existence of any other claims against the Merchant, by STPL, its Affiliate or Service Provider, " +
+                    "including without limitation as described in Clause 5.5 hereto In the event any security deposit is required to be" +
+                    " submitted, the Merchant hereby agrees to deposit the security deposit with STPL, within 3(three) working days (a day" +
+                    " not being Sunday or public holiday) on receipt of written notice from STPL, specifying the security deposit amount " +
+                    "required to be deposited by the Merchant If the Merchant fails to deposit the security deposit within timeline specified" +
+                    " by STPL, STPL shall\nhave the right to forthwith terminate the Agreement at its sole discretion without any liability" +
+                    " whatsoever Notwithstanding the preceding sub-clause, Merchant hereby agrees and acknowledges that STPL, may allocate " +
+                    "the funds for the security deposit from the settlement amounts payable by STPL, its Affiliate or Service Provider, in " +
+                    "accordance with the terms of the Agreement The Merchant hereby agrees and acknowledges that STPL may use the security " +
+                    "deposit to deduct losses, costs, damages or Chargebacks, Refunds, returns, penalties etc. suffered or incurred by STPL, " +
+                    "its Affiliate or Service Provider, due to fraud, misconduct, negligence, deficiency of service or for any other reason " +
+                    "including deduction of any kind of outstanding fees payable by the Merchant to STPL its Affiliate or Service Provider " +
+                    "It is hereby agreed between the Parties that STPL, may in its sole discretion change the terms ";
+            table20.addCell(getRowCellwithJusifyAlign(column6));
+
+            String column7 = "of the security deposit at any time for any reason upon providing a written intimation to the Merchant The Merchant agrees that STPL may recover" +
+                    " any debit balance or outstanding amount of any nature from the Merchant's bank account through" +
+                    "NACH/ECS/ACH/Standing\tInstruction/" +
+                    " recovering from POS transaction settlements or any other clearing method\n" +
+                    "5.3 Time of making payments/due date of payment: Upon completion of the Transaction and the receipt of funds by STPL, " +
+                    "its Affiliate or Service Provider, and where applicable, on receipt of proof of delivery of the dispatch of the relevant" +
+                    " product and/or services of the Merchant, STPL, its Affiliate or Secs ice Provider, shall deliver payments to the " +
+                    "Merchant, to the later of. (i) two (02) business days from the date of receipt of funds from the bank or financial " +
+                    "institutions, or Service Provider (ii) the maximum period of time for the making of payments by STPL, its Affiliate " +
+                    "or Service Provider, under extant regulations from time to time Provided however that in the event this Agreement is " +
+                    "under the termination notice period, the payments will be only after the expiration of one hundred and twenty (120) " +
+                    "business days following the termination of the Agreement\n" +
+                    "5.4 The ME shall at all times maintain an active bank account for remittance of such settlements and provide information" +
+                    " and details thereof as may be requested by STPL 5.5 The transfer of payments under this Agreement by STPL, its " +
+                    "Affiliate or Service Provider, to the Merchant, due to STPL, its Affiliate or Service Provider, being unable to " +
+                    "exercise set-offs against amounts due to STPL, its Affiliate or Service Provider, shall not constitute a waiver of" +
+                    " its rights to recover amounts payable by the Merchant to STPL, its Affiliate or Service Provider, nor constitute " +
+                    "a waiver of its rights to seek indemnities from the Merchant for losses suffered by STPL, its Affiliate or Service " +
+                    "Provider, for claims permissible under applicable law or for any reason, including but not limited to claims on grounds" +
+                    " of:\n" +
+                    "a)\tAny Transaction is for any reason unlawful, fraudulent, collusive, illegal or unenforceable\n" +
+                    "b)\tTransactions beyond the validity date shown on the Card;\n" +
+                    "c) Transactions where the Card is mutilated altered or the Card face or signature panel strip is defaced or faded.\n" +
+                    "d)\tTransactions received by the bank after five 4 working days of its date appearing on the Chargeslip.\n" +
+                    "e)\tAny\tinformation\tpresented " +
+                    "electronically to STPL, its Affiliate or Service Provider, in respect of the Transaction is not received in accordance" +
+                    " with STPL's its Affiliate's or Service\n" +
+                    "Provider's requirements as specified from time to time or Transactions not in conformity with this Agreement\n" +
+                    "f) Any Transaction is made outside the territory authorized for the use of such instrument (the authorized territory being" +
+                    " within India)\n" +
+                    "g)\tTransaction which is posted more than once to Cardholders' account\n" +
+                    "h)\tTransaction which is doubtful or erroneously paid for, to the Merchant\n" +
+                    "5.6 STPL. its Affiliate or Service Provider, reserves the right to";
+            table20.addCell(getRowCellwithJusifyAlign(column7));
+
+            String column8 = "discontinue, with the provision of the Payment " +
+                    "Services and recover such amounts from the Merchant and be indemnified in relation to any losses in connection thereto\n" +
+                    "5.7 The Merchant hereby agrees that in the event of non-payment of any outstanding amount due to STPL by the Merchant," +
+                    " then STPL and / or its Affiliates shall have the automatic right to (i) recover such outstanding amounts of any" +
+                    " nature from the Affiliates / associates / group companies of the Merchant and/or (ii) set-off against the amounts " +
+                    "under any agreement executed by STPL with the Affiliates / associates / group companies of the Merchant\n" +
+                    "6. GPRS ENABLED POS FACILITY (IF APPLICABLE)\n" +
+                    "6.1 At the request of the Merchant, STPL may provide GPRS enabled POS terminal to the Merchant The rentals/charges " +
+                    "mentioned in the Schedule A (as revised front time to time) would be applicable and the ME agrees that STPL may debit" +
+                    " ME account to recover the applicable charges for the services\n" +
+                    "a)\tIf the Merchant defaults in payment of \n" +
+                    "rentals For two (2) months, STPL reserves the right to deactivate/de-install the terminal without any intimation " +
+                    "to the Merchant and Merchant shall return the terminal to the STPL representative, or the service provider authorized " +
+                    "by STPL failing which STPL shall recover the costs of the terminal from payments due to the Merchant without any notice\n" +
+                    "b)\tSTPL shall authorize service provider \n" +
+                    "to collect the outstanding amount from the Merchants of STPL and the service provider shall issue an acknowledgement " +
+                    "of receipt for the collection of' the outstanding payment In the event of continued default in payment by the Merchant" +
+                    " of amounts due to STPL, then the service provider shall have the option (subject to consent from STPL) to convert " +
+                    "the Merchant's monthly rental plan to advance rental\n" +
+                    "c)\tThe Merchant agrees to settle the \n" +
+                    "transaction in any case before seven 4days, failing which the Merchant loses the claim on the unsettled amount In " +
+                    "case the Merchant is unable to settle the transaction due to software/hardware issues, the Merchant needs to log a" +
+                    " complaint with the STPL customer service immediately\n" +
+                    "d)\tThe period of unsettled transactions \n" +
+                    "and interchange are subject to change as per Card Associations/BANK/RBI/NPCI etc. and will be applicable on the " +
+                    "Merchant from time to time\n" +
+                    "e)\tThe Merchant shall take full\n" +
+                    "responsibility for the SIM being lost/damaged and/or being misused and/or any other malpractice through this SIM" +
+                    " Merchant shall not hold STPL responsible for any such activities Any charges levied on this SIM for a purpose other " +
+                    "than the purpose mentioned herein will be borne by the Merchant\n" +
+                    "6.2 In addition to the covenants set out in Clause 6 all other Merchant terms and covenants stated in the Agreement " +
+                    "shall apply to GPRS facility\n" +
+                    "6.3 Cash@POS facility/MATM\n" +
+                    "a)\tAt the request of the Merchant STPL \n";
+            table20.addCell(getRowCellwithJusifyAlign(column8));
+            document.add(table20);
+
+            PdfPTable table21 = new PdfPTable(4);
+            table21.setWidthPercentage(100);
+            table21.setWidths(new float[]{1, 1, 1, 1});
+            String column9 = "may enable the Cash@POS /MATH facility in the GPRS POS terminal to the Merchant The rentals/charges mentioned in" +
+                    " Schedule A shall be applicable, and the ME agrees that STPL may debit ME account to recover the applicable charges for the service\n" +
+                    "b)\tThe Merchant agrees that the \n" +
+                    "Cash@POS/MATM Transaction will not be split into multiple transactions and will be processed in Full as per the limit assigned on the Card\n" +
+                    "c)\tThe Merchant agrees that only \n" +
+                    "Customer cards will be accepted for doing Cash@POS/MATM Transactions and no personal cards of the Merchant will be used\n" +
+                    "d)\tThe Merchant agrees that all the \n" +
+                    "Transactions will be done during the normal business hours as shared in the Application Form\n" +
+                    "e)\tIf in event the Merchant fails to \n" +
+                    "comply with the conditions stated herein, Merchant understands that the terminals will be de-activated by STPL " +
+                    "and the settlement will be released only upon investigation and proper documentation done with STPL and " +
+                    "corresponding bank partner There will be no incentive provided for TID's in case the Transactions are not done " +
+                    "in accordance to the rules stated above\n" +
+                    "6.4 QR Services\n" +
+                    "a)\tAt the request of the Merchant, STPL \n" +
+                    "may enable the QR. Services facility to the Merchant The rentals/charges mentioned in Schedule A (as revived " +
+                    "from time to time) shall be applicable, and the ME agrees that STPL may debit ME account to recover the applicable" +
+                    " charges for the said service\n b)\tThe Merchant agrees that all the \n" +
+                    "Transactions will be done during the normal business hours as shared in the Application Form\n" +
+                    "c)\tIf in event the Merchant fails to \n" +
+                    "comply with the conditions stated herein, Merchant understands that the terminals will be de-activated by " +
+                    "STPL and the settlement will be released only upon investigation and proper documentation done with STPL and " +
+                    "corresponding bank partner There will be no incentive provided for TID's in case the Transactions are not done " +
+                    "in accordance to the rules stated above.\n" +
+                    "d)\tIn addition to the covenants set out in \n" +
+                    "Clause 6 all other Merchant terms and covenants stated in the Agreement shall apply to QR Services.\n" +
+                    "7. CHARGEBACK AND OTHER DUES:\n" +
+                    "7.1 STPL, its Affiliate or Service Provider, shall be entitled and Merchant hereby authorizes STPL, (i) " +
+                    "to debit to the Merchant ID or bank account of the Merchant; (ii) recover from Transaction settlements " +
+                    "or Card collections from time to time; or(iii) to bill ME for the relevant amounts or any parts (iv) or " +
+                    "through NACH/ECS/ACH/Standing Instructions thereof and to pay the same without any demur or protest, to " +
+                    "recover any amounts due from it or incurred by STPL, its Affiliate or Service Provider, on account of the following:\n" +
+                    "(i) Chargeback of Transactions; or\n" +
+                    "(ii) Any\tpenalties,\tcharges/fees,\n" +
+                    "consequential loss or claims including but not limited to legal claims that may be made against STPL, by" +
+                    " Service Provider,";
+            table21.addCell(getRowCellwithJusifyAlign(column9));
+
+            String column10 = "Customers or regulatory authorities for any other reason than a breach of this Agreement " +
+                    "by STPL These amounts shall include without limitation any costs arising as a result of excessive Chargeback of\n" +
+                    "Transactions or failure of Transactions or Customer disputes.\n" +
+                    "7.2 Refunds\n" +
+                    "a) In the event that (i) any " +
+                    "goods/services are not received by a Card Holder, or (ii) any goods/services are rejected pursuant to non-compliance by the ME, or tint anv goods/services rejected pursuant to any terms of contract between the ME and the Card Holder, or (iv) Any goods/services are otherwise lawfully rejected or (v) goods are accepted for return \n" +
+                    "and/or services paid for by the Card Holder are not performed or are cancelled by the ME or (vi) the price is lawfully disputed by the Card Holder or the price adjustment is disputed by the ME, the ME shall refund such amounts to the Card Holder, within fourteen 10 working days from the date of claim\n" +
+                    "b)\tCash and other means of refunds for a " +
+                    "Card sale are strictly prohibited and any Refund must be paid to the same Card account used for the sale Transaction within Fourteen 10 working days\n" +
+                    "C)\tNotwithstanding sub-clause (a) above\n" +
+                    "STPL, its Affiliate or Service Provider, or acquiring bank may in its absolute discretion instruct the bank to adjust all such amounts from the amount payable to ME or provide for such other procedure, for Refund, in writing, as STPL, its Affiliate or Service Provider, or acquiring bank may deem fit from time to time\n" +
+                    "8. REPRESENTATIONS, WARRANTIES AND COVENANTS\n8.1 STPL represents and warrants that:\n" +
+                    "(i)\tit is duly organized and validly existing and is duly qualified, including For undertaking the transactions contemplated by this Agreement; and\n" +
+                    "(ii)\tit has all the requisite power, including corporate power and authority to enter into this Agreement, " +
+                    "to perform its obligations thereunder and to consummate the transaction contemplated hereby\n" +
+                    "8.2 Merchant represents, warrants and covenants that:\n" +
+                    "(i)\tit has full capacity, power and authority to enter into this Agreement and has already taken and will continue " +
+                    "to take all necessary and further actions, (including  where applicable without limitation obtaining " +
+                    "of all governmental and other necessary approvals\tconsents\tlicenses in all \n" +
+                    "applicable jurisdictions) and to authorize the execution, delivery and performance of this Agreement;\n" +
+                    "(ii)\tThis Agreement is a legal and binding obligation of ME and is enforceable against the ME in accordance with its terms\n" +
+                    "(iii)\tit conducts its Business as set out in the Application Form;\n" +
+                    "(iv)\tservices provided hereunder may involve third party providers like banks, payment processors, merchant" +
+                    " acquirers etc. and it shall comply with all Rules stipulated by such parties and as supplied by STPL from time to time\n" +
+                    "(v)\tit shall not use the Payment Services in any manner, or in";
+            table21.addCell(getRowCellwithJusifyAlign(column10));
+
+            String column11 = "furtherance of any activity, which constitutes" +
+                    " a violation of any law or regulation or Rules or which may result in fraud on any person or which may cause STPL," +
+                    " its Affiliate or Service Provider, to be subject to investigation, prosecution or legal action In the event of any " +
+                    "suspected fraud, STPL shall have the rights to suspend all payments under this Agreement to the ME, pending enquiry by STPL,\n" +
+                    "(vi)\tit shall provide all assistance as may be necessary to STPL for the prevention and detection of fraud in the " +
+                    "operation of the Equipment;\n(vii) it shall comply with all data protection laws and policies, disclose its privacy policy on the website and ensure that it conducts its " +
+                    "business in accordance with the same;\n" +
+                    "(viii)\tit shall take all such precautions as may be feasible or as may be directed by STPL, its Affiliate or Service Provider," +
+                    " to ensure that there is no breach of security and that the integrity of the link between Payment Channels, POS and the Payment Modes is maintained at all times;\n" +
+                    "(ix)\tit shall not describe itself as an agent or representative of STPL its Affiliate or Service Provider,\n" +
+                    "(x)\tSTPL its Affiliate or Service Provider \n" +
+                    "shall not be a party to any agreement(s), assurance(s) or undertaking(s) between the Customers and Merchant in any manner whatsoever\n" +
+                    "(xi)\tit shall use the Payment Services only for POS and MPOS and product/service categories approved by STPL, under this Agreement" +
+                    " and for no other products or services It shall at all times during the subsistence of this Agreement observe and " +
+                    "comply with all applicable laws, Rules and regulations in each applicable jurisdiction,\n" +
+                    "(xii)\tMerchant will not split a single Transaction into multiple transactions;\n(xiii)\tIt shall not accept Card transaction for a) Goods and/or services that are prohibited by law b) Goods and " +
+                    "or/services outside the description of ME's Business\n" +
+                    "(xiv)\tME shall a) honour a Valid Card when presented for a Transaction and must not favour any one type of Card; " +
+                    "b) Not engage in any practices or procedures that discriminates against, or discourages the use of Valid Cards whether " +
+                    "in favour of cash or any other competing card brand; c) Not levy any service charges on the Cardholder for the use " +
+                    "of the Card; d) Not place any minimum limit on the transaction to accept a Valid Card unless if the same is a" +
+                    " regulatory/Card Association or any other governing body Rule(s)or e) impose any restrictions, conditions, " +
+                    "or disadvantages when the Card is accepted that are not imposed equally on all other payment products (except" +
+                    " where expressly permitted under Applicable Law)\n" +
+                    "(xv)\tMerchant shall not use Card for working capital usage and shall not dispense cash against Card usage\n" +
+                    "(xvi)\tthe\tapplication/software\tFor \n" +
+                    "completing PUS transaction is current and meets the requirements issued by STPL or the Service Providers of STPL\n" +
+                    "(xvii) that the Card of the ME or that of its blood relatives (in the event the ME is an individual) is not used " +
+                    "in its";
+            table21.addCell(getRowCellwithJusifyAlign(column11));
+
+            String column12 = "own Mpos/POS services\n (xviii)\twhite plastics/card without\n Logo\tof\n" +
+                    "bank/MasterCard/Visa/Rupay/Amex/ Diners/Discover shall not be accepted,\n" +
+                    "(xix)\tsensitive personal identification data shall not be accepted through unsecured mode\n" +
+                    "(xx)\tIt shall ensure that the Equipment and/or the SIM (f procured by she Merchant from STPL is/are not " +
+                    "damaged/lost/misplaced Merchant is liable to pay the cost of the device and/or SIM including the penalty " +
+                    "to STPL/Service Provider, the actual amount to be paid will be determined by STPL at the time of occurrence of the issue\n" +
+                    "(xxi)\tEach statement made on the Application Form and any documents provided in support thereof are true as of the Execution Date\n" +
+                    "(xxii)There have been no materially adverse changes in information provided in the Application Form or in Merchant's financial condition, or management\n" +
+                    "(xxiii)\tMerchant does not do business \n under a trade name or style not previously disclosed in writing, and there has been no change in the nature of " +
+                    "Merchant's Business or the product lines that Merchant sells not previously disclosed;\n (xxiv)\tThe Transaction is genuine and \n" +
+                    "arises from a bona fide sale of merchandise or services by Merchant, represents a valid obligation for the amount " +
+                    "shown on the Chargeslip and does not involve the use of the Card for any other purpose;\n" +
+                    "(xxv)\tMerchant has title to the Transaction and Chargeslip, there are no liens or other encumbrances on it, and " +
+                    "Merchant has the authority to convey the Transaction For processing;\n (xxvi)\tThe Transaction is not subject \n" +
+                    "to any dispute, set-off or counterclaim;\n (xxvii)\tThe Transaction has not been \n previously presented for processing\n(xxviii) Each statement on the \n Transaction receipt is true, and Merchant has no knowledge of facts that " +
+                    "would impair the validity or collectability of the amount of the Transaction\n (xxix)\tIt shall inform STPL of any \n" +
+                    "claims it receives in respect of the Transactions or any other matter arising out of this Agreement and shall " +
+                    "provide all details as requested by STPL and shall not compromise or otherwise deal with the same without prior" +
+                    " written consent of STPL Notwithstanding the preceding statement, Merchant acknowledges that STPL shall be under no " +
+                    "obligation to provide any assistance to the ME in respect of the claim, unless mandated by applicable laws " +
+                    "(xxx)ME shall allow STPL to conduct inspections with respect to provision of this Agreement\n (xxxi)\tME agrees to be bound by the\n" +
+                    "policies and procedures published at www.americanexpress.com/InternationalRegs from time to time\n 8.3 Transaction Handling\n" +
+                    "ME shall\n a)\tEnter into Transactions only in Indian \n Rupees unless otherwise permitted by bank/ STPL in advance in writing;\n" +
+                    "b)\tNote down, export data pertaining";
+            table21.addCell(getRowCellwithJusifyAlign(column12));
+            document.add(table21);
+
+            PdfPTable pTable32 = new PdfPTable(4);
+            pTable32.setWidthPercentage(100);
+            pTable32.setWidths(new float[]{1, 1, 1, 1});
+            String column13 = "to daily Transactions as a report for accounting purposes;\n" +
+                    "C) Retain all Transaction data for a minimum period of twelve months and provide in such form and manner as may be " +
+                    "required by STPL or its Affiliate or Service Provider, or bank from time to time, information and related documentation in respect of Transactions;\n" +
+                    "d)\tWhile presenting any Transaction \n information, certify to STPL, its Affiliate, Service Provider, or bank that" +
+                    " (i) all statements of Facts contained therein are true and complete in all respects, (ii) ME has supplied goods and /or" +
+                    " services to which the Transaction information relates and to the value stated therein and at a price not greater or " +
+                    "not less favorable than the same price and terms at and on which such goods and /or services are supplied by ME for " +
+                    "cash, (iii) the Transaction information pertaining to each sale has been supplied only once, and (iv) that the sale " +
+                    "of such goods and /or services are not unlawful\n e)\tIn the event Equipment is leased by \n STPL, accept that any" +
+                    " decision to remove the Equipment for misrepresentation or non¬performance (which shall rest entirely at the discretion" +
+                    " of STPL) and ME shall immediately return the Equipment to STPL or as Affiliate or Service Provider or bank upon request\n" +
+                    "8.4 Customer Handling ME shall\na)\tUndertake all responsibilities and not \n" +
+                    "dispute for any reason, to follow all the instructions provided by STPL with respect to verification of the Card Holder" +
+                    " and/or the Transactions.\n b)\tDeliver to the Card Holder a true \n electronic/physical copy of the Chargeslip;\n" +
+                    "c)\tIf a Card is left behind by the Card \n Holder on the ME's premises: (i) Return it to the Card Holder subject " +
+                    "to receiving the Card Holder's request in writing supported by evidence of identification; or (ii) Hand it over to" +
+                    " STPL its Affiliate or Service Provider, or bank, within three (3) working days, in absence of such request and evidence\n" +
+                    "9. USE OF INFORMATION:\n9.1 The Merchant undertakes that, STPL (either on its own or through its representatives / " +
+                    "service providers / vendors) shall use, store, dispose and process personal information (including card holder " +
+                    "information) of Customers / Merchants and such proprietary information shall be stored and used only in accordance with the Applicable Laws\n" +
+                    "9.2 The Merchant hereby expressly consents to the (i) use of information by the third party service providers of STPL;" +
+                    " and/or (b) disclosure of information to the third party service providers of STPL, subject to compliance with Applicable Law\n" +
+                    "10.\tTERM\tAND\nTERMINATION:\n 10.1\tThis Agreement shall be\n effective as of the Execution Date and shall remain in" +
+                    " force for a period of one (01) year thereafter (the \"Initial Term\") The Initial Term shall automatically be renewed " +
+                    "and shall extend for successive twelve (12) month terms (each a \"Renewal Term\" and all such Renewal Terms together" +
+                    " with the Initial Term, the \"Term\"), commencing at the conclusion of the Initial Term or any";
+            pTable32.addCell(getRowCellwithJusifyAlign(column13));
+
+            String column14 = "Renewal Term, unless" +
+                    " either Party gives the other written notice at least thirty (30) days prior to the conclusion of the Initial Term or " +
+                    "the then current Renewal Term, as the case may be, that the Agreement will not be renewed, failing which the Agreement shall be deemed renewed automatically\n" +
+                    "10.2\tThis Agreement may be\n terminated by STPL by giving thirty days (30) days prior notice in writing to the Merchant without being required to assign or give any reasons\n" +
+                    "10.3\tSTPL reserves the right to\n terminate the Agreement with immediate effect (i) in case of fraud (including " +
+                    "suspected ,fraud), facilitation of suspicious Transaction; (ii) if the Merchant has breached any of the representations," +
+                    " warranties, terms and covenants of the Agreement and has failed to cure such breach within thirty (30) days of notice " +
+                    "of breach; (iii) if the ME becomes bankrupt, insolvent or is likely to become so (al the sole determination of STPL);" +
+                    " (iv) material adverse change in Merchant's financial condition; (v) if there is no Transaction activity by the ME for " +
+                    "a period of three 2 months or more; or (vi) if the Chargeback in any month crosses 0 03% of total Transaction value of that month.\n" +
+                    "10.4\tConsequences\tof\n Termination: Upon termination of this Agreement (i) all Equipment leased or rented from STPL " +
+                    "shall be returned immediately to STPL at Merchant's expense or in the event any Equipment is lost, the ME shall pay the " +
+                    "costs for replacing the same; (ii) Any rental fees paid towards lease of Equipment (as advance or otherwise), as on the " +
+                    "effective date of termination, shall stand forfeited in its entirety (iii) the SIM procured from STPL shall be returned " +
+                    "immediately to\n STPL and deactivated at Merchant's expense or in the event the SIM is lost, the ME shall pay the costs " +
+                    "For replacing the same; (iv) All Confidential Information issued by the Parties from time to time in respect of this " +
+                    "Agreement shall be returned to the other or destroyed by each of the Parties However, STPL shall preserve documents, " +
+                    "data and information in accordance with the legal/ regulatory obligations of STPL in this regard; (v) Licenses granted by STPL to the Merchant shall cease forthwith; (vi) Merchant acknowledges that it shall honour all Transactions until" +
+                    " the Agreement is in Force unless specifically suspended by STPL; and (vii) Merchant will be liable for any future " +
+                    "Chargebacks that may arise subsequent to the termination of the Agreement, on account of Merchant Transactions The " +
+                    "Merchant shall provide necessary documentation related to Transactions done by Merchant post termination up to a period" +
+                    " of fifteen 24) months in case of Customer disputes, failing which the Merchant will indemnify STPL, its Affiliate, or " +
+                    "Service Provider towards such Transaction loss\n 10.5 Termination of this Agreement shall not affect any accrued rights" +
+                    " or liabilities of either Party nor shall it affect the coming into force or the continuance in force of any provision" +
+                    " of this Agreement which is expressly or by implication intended to come into or continue in force on or after ";
+            pTable32.addCell(getRowCellwithJusifyAlign(column14));
+            String column15 = "such termination including, without limitation, Clause 4 (Fees for Payment Services), Clause 5 (Charges and Settlement of" +
+                    " Accounts), Clause 7 (Chargeback and other dues), Clause S (Representations and Warranties), Clause 10.1 (Consequences" +
+                    " of termination), Clause 11 (Confidentiality), Clause 13 (Indemnification), Clause 15 (Limitation of Liability), Clause" +
+                    " 16 (Non-solicitation), Clause 19 (Miscellaneous) of this Agreement.\n 11.\tCONFIDENTIALITY:\n" +
+                    "11.1 Each Party acknowledges and agrees that in connection with this Agreement, the receiving Party shall not disclose " +
+                    "to any third Party any Confidential Information of the disclosing Party that it may have access to during and in" +
+                    " connection with its performance of obligations hereunder\n 11.2\tMerchant shall ensure that that\n" +
+                    "neither the Merchant nor any of its employees are privy to any information relating to Customer details and " +
+                    "information relating to passwords/pins and other private matters in respect of the Payment Services and shall " +
+                    "not store, use or disclose the name of the Card Holder or other Confidential Information unless such disclosure is " +
+                    "compelled by applicable law and in adherence with the relevant data security policies set by any of the regulatory " +
+                    "commissions, as mandated by the Government of India\n 11.3\tThe ME agrees and undertakes\n" +
+                    "that it shall (i) maintain confidentiality of all information disclosed hereunder by STPL its Affiliate, Service Provider" +
+                    " and /or Customer including but not limited to Confidential Information; (ii) take all steps to protect the integrity " +
+                    "of Confidential Information and protect against any unauthorized disclosure thereof; (iii) promptly inform STPL its " +
+                    "Affiliate, Service Provider and/or Card Holder in the event of breach of this obligation and take all steps necessary" +
+                    " to retrieve and protect the Confidential Information and prevent further disclosure; (iv) Ensure that employees and " +
+                    "representatives have access on a need to know basis and are subject to the same confidentiality obligations herein; " +
+                    "(v) use the Confidential Information solely for the purposes of this Agreement and not profit\n" +
+                    "from the same in any unauthorized manner, (vi) ensure that the payment application software version used for processing " +
+                    "Card payments is PADSS approved and other global security standards for card present transactions\n" +
+                    "11.4\tEach Party acknowledges that\n" +
+                    "monetary damages may not be a sufficient remedy for unauthorized disclosure of any Confidential Information / materials" +
+                    " and that the disclosing party shall be entitled, without waiving any other rights or remedies, to such injunctive or " +
+                    "equitable relief as may be deemed proper The confidentiality obligations herein shall survive the termination of this Agreement\n" +
+                    "12. INTELLECTUAL PROPERTY:\n" +
+                    "12.1 Merchant acknowledges and agrees that STPL owns or has the right to use all the intellectual property incorporated " +
+                    "in the Software and associated with the Payment Services This Agreement does not grant the Merchant any rights to, or";
+            pTable32.addCell(getRowCellwithJusifyAlign(column15));
+            String column16 = "in, patents, copyrights, trade secrets, trade names, trademarks (whether registered or unregistered), or any other " +
+                    "rights or licenses in respect of the Software, Equipment or in relation to the Payment Services, other than as specified in this Agreement\n" +
+                    "12.2\tMerchant shall not access any part of the Software and/or Equipment, in order to build a product or service which competes with the Software, " +
+                    "Equipment and/or the businesses of STPL\n 12.3\tThe Merchant grants STPL a\n" +
+                    "nonexclusive, royalty free license to use, display and reproduce the Trademarks and logos of the Merchant solely in " +
+                    "connection with the marketing of the services and provisions of the services in accordance with the terms and conditions" +
+                    " of the Agreement The Merchant hereby confirms that the Merchant has the requisite right to use the said Trademarks and " +
+                    "logos and to grant permission to use the same by STPL its Affiliate, or Service Provider\n 12.4\tMerchant\tagrees\tand\n" +
+                    "acknowledges that the Merchant shall indemnify STPL against any losses or damages incurred by STPL its Affiliate, or " +
+                    "Service Provider due to any third party claims for infringement of the intellectual property right in relation to (i)" +
+                    " the license granted by the Merchant hereinabove; and (ii)Merchant's products or services offered For sale\n 13. INDEMNIFICATION:\n" +
+                    "13.1 Notwithstanding anything contained in this Agreement the Merchant hereby undertakes and agrees to indemnify and " +
+                    "hold harmless STPL and its directors, Affiliates, representative, business associates, Service Provider, employees and" +
+                    " agents against all actions, proceedings, claims, liabilities  (including statutory liabilities'), penalties, demands " +
+                    "and costs (including without limitation, legal costs of STPL, on a solicitor attorney and own client basis), awards," +
+                    " damages, losses and/or expenses however arising directly or indirectly as a result of: (1) any claim or proceeding " +
+                    "brought by the Customer or any other person against STPL its Affiliate, or Service Provider in respect of any services " +
+                    "offered by the Merchant: (ii) any negligent act of Merchant's agents, employees, licensees or Customers;\n" +
+                    "( iii) any fines, penalties or interest imposed directly or indirectly on STPL, its Affiliate, or Service Provider on" +
+                    " account of Merchant's services or Transactions conducted through Merchant under this Agreement; and (iv) breach of any of terms and conditions of this Agreement by the Merchant, its agents, employees or representatives\n" +
+                    "14. NO WARRANTY:\n" +
+                    "14.1 The Merchant also acknowledges that the services provided by the Service Providers, business associates or merchant" +
+                    " acquirer to STPL, which is passed on to the Merchant under this Agreement, can be in any event be brought to an abrupt" +
+                    " end by the Service Providers, business associates or merchant acquirer For any reason whatsoever, and in such an event" +
+                    " the Payment Services to the Merchant will in turn be terminated without STPL having to be given any reason whatsoever\n";
+            pTable32.addCell(getRowCellwithJusifyAlign(column16));
+            document.add(pTable32);
+            PdfPTable pTable33 = new PdfPTable(4);
+            pTable33.setWidthPercentage(100);
+            pTable33.setWidths(new float[]{1, 1, 1, 1});
+            String column17 = "14.2 STPL's sole obligation and the Merchant's sole and exclusive remedy in the event of interruption to the Payment " +
+                    "Services or loss of use and/or access to the merchant acquirers or business associate or Service Providers' Payment " +
+                    "Channels and services, shall be, to use all reasonable endeavors to restore the Payment Services and/or access to the " +
+                    "Payment Channel as soon as reasonably possible\n" +
+                    "14.3 without prejudice to any other provision of this Agreement STPL does not warrant that:\n" +
+                    "(a)\tthe Payment Services or business associates or merchant acquirer's or Service Provider's Payment Channels will be" +
+                    " provided 'uninterrupted' or 'free from any errors'; or\n" +
+                    "(b)\tthe Payment Services are free from any virus, Trojan or other malicious, destructive or corrupting code, program or macro\n" +
+                    "14.4 STPL reserves the right to make changes, enhancements, and/or modifications, due to mandatory, or regulatory or" +
+                    " periodic requirements, applicable to the Payment Services from time to time in such manner as it may deem necessary or " +
+                    "appropriate for the provision of the Payment Services by providing notice to the Merchant of the same Merchant agrees " +
+                    "to comply with the directions and/or instructions issued by STPL, its Affiliate, or Service Provider to suitably modify" +
+                    "/upgrade the Merchant's systems to comply with the standards of the Payment Channels (then in force) and the standards" +
+                    " applicable to the Payment Services If so requested by the Merchant, STPL shall provide such additional services to the" +
+                    " Merchant to suitably modify/upgrade the Merchant's systems and the Merchant agrees to pay STPL such additional charges" +
+                    " as STPL deems fit in this regard\n 15. LIMITATION OF LIABILITY:\n" +
+                    "15.1 In no event shall STPL be liable, whether in contract or in tort or otherwise for special, punitive, indirect " +
+                    "or consequential damages, including without limitation, loss of profits or revenue arising for anticipated sales under" +
+                    " or in connection with this Agreement or the cost of procurement of substitute services or for any costs or expenses, " +
+                    "expenditure, investments or other commitments made in reliance upon or otherwise in connection with or arising out of " +
+                    "this agreement, under statute, in equity, at law or otherwise, whether or not the party has been advised of possibility" +
+                    " of such damage\n 15.2 Notwithstanding any other term of this Agreement or any damages that may be incurred by the " +
+                    "Merchant for any reason whatsoever, the entire liability of STPL under this Agreement, shall be limited to an amount" +
+                    " not exceeding the net earning received from the Merchant for the Payment Services for the week immediately preceding the date of such proven claim/demands\n" +
+                    "16. NON-SOLICITATION:\n" +
+                    "Merchant agrees that during the Term of this Agreement and for a period of two (2) years thereafter, it shall not, without the prior written";
+            pTable33.addCell(getRowCellwithJusifyAlign(column17));
+            String column18 = "approval of STPL hire or enter into a contract with any employee, agent or representative of STPL to provide " +
+                    "services to the Merchant or, directly or indirectly, induce or attempt to induce or otherwise counsel, discuss, advise" +
+                    " or encourage any employee, consultant, agent or representative of STPL to leave or otherwise terminate such person's" +
+                    " relationship with STPL\n 17. APPLICATION OF THIRD PARTY AGREEMENTS:\n (a)\tSTPL has entered into definitive \n" +
+                    "agreements with the Service Provider in connection with and to facilitate the provision of the Payment Services set" +
+                    " out herein including but not limited to (i) Service Provider Agreement(ii) Payment\tand\tCollection \n" +
+                    "Management Agreement (iii) Payment & Facilitation Services Agreement\t(iv)\tMerchant\n" +
+                    "Acquiring/Services\tAgreement\n (v) Payment Acceptance Agreement for Cards; (vi) other payment acceptance or collection" +
+                    " solutions agreements (collectively the \"Third Party Agreements\") Merchant acknowledges the terms of the Third Party " +
+                    "Agreements and further explicitly agrees that the terms of the Third Party Agreements will apply on a back to back basis" +
+                    " to the Merchant, as if, it was a party thereto in place of STPL All liabilities and obligations set out in the Third " +
+                    "Parts Agreement shall be deemed to be liabilities and obligations of the Merchant Merchant shall hold harmless and " +
+                    "indemnify STPL against any claims that may arise from the Third Party Agreement entered by STPL\n (b)\t\n" +
+                    "18. PROHIBITED PRODUCTS & SERVICES:\n18.1 The Merchant hereby expressly agrees not to directly or indirectly deal in such " +
+                    "product(s) or service(s) in \nrestricted categories as provided by STPL, at any time during the subsistence of this Agreement including but not " +
+                    "limited to the categories set out in www.bijlipay.co.in Without prejudice whatsoever to STPL's other rights and " +
+                    "privileges, the Merchant binds himself unequivocally to be solely liable for including but not limited to any legal " +
+                    "actions and suits, and to make good to STPL, immediately upon demand, damages suffered by STPL directly/indirectly or" +
+                    " owing to claims by any third party, levy of assessment fees or fines, penal actions taken by Card Associations, the " +
+                    "Reserve Bank of India and any other statutory or competent authorities for any breach of any terms of this Agreement\n" +
+                    "19. MISCELLANEOUS:\n 19.1 Entire Agreement:\n This Agreement with all its Schedules comprise the final understanding of " +
+                    "the Parties relating to the subject matter hereof and cancels all prior discussion or agreements, whether written or oral" +
+                    ", between the Parties Any modification of or amendment to this Agreement, shall be effective upon a notification to the Merchant by email, or any other mode of";
+            pTable33.addCell(getRowCellwithJusifyAlign(column18));
+            String column19 = " communication as agreed between the Parties\n" +
+                    "19.2 Severability:\n If any provision of this Agreement is determined to be unenforceable in whole or" +
+                    "in part thereof for any reason, then such provision or part thereof, shall to that extent be deemed deleted from this agreement and the legality, " +
+                    "validity and enforceability of the remaining provisions of this Agreement shall not be in any way be affected thereby " +
+                    "and any act of omission/commission of the Parties hereto done prior to the provisions being held unenforceable shall " +
+                    "be deemed to be valid and/or binding on the other\n 19.3 Assignment:\nThis Agreement will bind the successors and " +
+                    "permitted assigns of the Parties hereto and the Merchant will notify and obtain prior consent from STPL before assignment" +
+                    " of this Agreement (whether by operation of or otherwise) The rights under this Agreement granted to the Merchant are" +
+                    " not assignable or transferable without the prior approval of STPL STPL shall be entitled to assign or transfer its rights and obligations under this Agreement to any other entity\n 19.4 Force Majeure Neither Party will be liable for any delay or failure in performing its obligations hereunder that is due to an act of God, act of governmental body or military authority, " +
+                    "fire, explosion, flood, epidemic, riot or civil disturbance, war, act of terrorism, sabotage, accidents, insurrections, blockades, embargoes, storms or similar event beyond " +
+                    "the reasonable control of the non-performing Party (each, a \"Force Majeure Event\") Upon the occurrence of a Force Majeure Event, the Party whose performance is " +
+                    "affected will give written notice to the other Party describing the affected performance The Parties will promptly confer, in good faith, to agree upon equitable " +
+                    "and reasonable action to minimize the impact of the condition on both Pasties The Parties agree that the Party whose performance is affected will use\n" +
+                    "commercially reasonable efforts to minimize the delay caused by the Force Majeure Event and recommence the affected performance if a Force Majeure Event prevents," +
+                    " hinders or delays the Merchant's ability to perform its obligations under this Agreement for thirty (30) consecutive days or more, then STPL may terminate this" +
+                    " Agreement immediately upon written notice In the event of such termination, the Parties shall follow the procedures laid down under Clause  10 4 of this Agreement 19.5" +
+                    " Rights, Remedies and Waiver: All rights and remedies hereunder shall be cumulative and may be exercised singularly or concurrently If either Party fails to perform its " +
+                    "obligations under any provision of this Agreement and if the other Party does not enforce such provision then, failure " +
+                    "to enforce on that occasion shall not prevent enforcement on later occasions";
+            pTable33.addCell(getRowCellwithJusifyAlign(column19));
+            String column20 = "\n19.6 Governing Law,Jurisdiction and Dispute Resolution:\n" +
+                    "This Agreement shall be governed by and construed in accordance with the laws in India The Parties agree to submit to the exclusive jurisdiction of the courts" +
+                    " located in Chennai, India as regards any claims or matters arising under or in relation to the terms and conditions of this Agreement The Parties hereto will" +
+                    " endeavor to settle amicably by mutual discussion any disputes, differences or claims whatsoever, related to this Agreement or arising on account of this Agreement" +
+                    " Failing such amicable settlement, any dispute shall be settled by arbitration by a single arbitrator who shall be appointed by STPL " +
+                    "The Arbitration and Conciliation Act, 1996 as amended from time to time shall govern the arbitration proceedings The jurisdiction for the purpose of" +
+                    " conducting arbitration proceedings or otherwise any proceedings before the courts shall always be that of Chennai, India The arbitral" +
+                    " procedure shall be conducted in the English language and any award or awards shall be rendered in English\n" +
+                    "19.7 Notices: Any notice or notification in connection with this Agreement shall be in writing and any notice or other" +
+                    " written communication pursuant hereto shall be signed by the Party issuing the same and shall be addressed to STPL, " +
+                    "or the Merchant at their respective addresses mentioned here in above or to such other address as the concerned Party may inform the other Party in accordance with the provisions of this Agreement" +
+                    "(a) Any notice, direction or instruction given under this Agreement shall be in writing and delivered by hand, registered post, courier, cable, facsimile or telex to If to STPL to the address as specified hereinabove\n" +
+                    "Chaitanya \"EXOTICA\" 9th Floor, New No 51, Venkatnarayana Road, T Nagar, Chennai, Tamil Nadu 600017\n" +
+                    "If to Merchant: to the Address as specified in the Application Form\n" +
+                    "(b) Nothing in the aforesaid clauses shall affect any communication given by way of the internet or other electronic medium as otherwise provided in this Agreement for the purpose of rendering the services\n" +
+                    "19 8 Counterparts:\n" +
+                    "The Parties may execute this Agreement in counterparts and each fully executed counterpart shall be deemed an original " +
+                    "Each Party hereto will receive by delivery or facsimile transmission or e-mail transmission a duplicate original of the\n" +
+                    "Agreement executed fay ear h Pally and each Party agrees that the delivery of the Agreement by facsimile transmission or e¬mail " +
+                    "transmission will be deemed to be an original of the Agreement so transmitted The delivery of signed counterparts by " +
+                    "facsimile transmission or electronic mail in `portable document format' (` pdf ) shall be as effective as signing and delivering the counterpart in person";
+            pTable33.addCell(getRowCellwithJusifyAlign(column20));
+            document.add(pTable33);
+
+            document.newPage();
+            String content10 = "IN WITNESS WHEREOF, the parties hereto have caused this agreement to be executed by their respective duty authorized officers as of the date first above witten\n";
+            Paragraph paragraph10 = new Paragraph(content10, normalFontSize8);
+            document.add(paragraph10);
+
+
+            if (leadInfo.getLeadSource() != null && leadInfo.getLeadSource().getLeadSourceName().equalsIgnoreCase(Constants.LEAD_SOURCE_FIDY_PAY)) {
+
+                PdfPTable table22 = new PdfPTable(3);
+                table22.setWidths(new float[]{1, 1, 1});
+                table22.addCell(getCellLeftAlignWithBold("for and on behalf of"));
+                table22.addCell(getCellLeftAlignWithBold("for and on behalf of"));
+                table22.addCell(getCellLeftAlignWithBold("for and on behalf of"));
+                document.add(table22);
+
+                PdfPTable table23 = new PdfPTable(3);
+                table23.setWidths(new float[]{1, 1, 1});
+                table23.addCell(getCellwithLeftAlignWithLeftRightBorder("SKILWORTH TECHNOLOGIES PRIVATE LIMITED"));
+                table23.addCell(getCellwithLeftAlignWithLeftRightBorder("MERCHANT"));
+                table23.addCell(getCellwithLeftAlignWithLeftRightBorder("Referral Partner"));
+                document.add(table23);
+
+                PdfPTable table24 = new PdfPTable(3);
+                table24.setWidths(new float[]{1, 1, 1});
+//            table24.addCell(getCellwithLeftAlignWithoutTopBorder(" "));
+                table24.addCell(getSignedImage());
+                table24.addCell(getCellwithLeftAlignWithoutTopBorder(" "));
+                table24.addCell(getCellwithLeftAlignWithoutTopBorder(" "));
+                document.add(table24);
+
+                PdfPTable table25 = new PdfPTable(3);
+                table25.setWidths(new float[]{1, 1, 1});
+                table25.addCell(getCellwithLeftAlignWithLeftRightBorder("Name :   M. R. BHANU PRATHAP"));
+                table25.addCell(getCellwithLeftAlignWithLeftRightBorder("Name :   " + leadInfo.getMerchantName()));
+                table25.addCell(getCellwithLeftAlignWithLeftRightBorder("Name :   " + "FidyPay"));
+                document.add(table25);
+
+                PdfPTable table26 = new PdfPTable(3);
+                table26.setWidths(new float[]{1, 1, 1});
+                table26.addCell(getCellwithLeftAlignWithLeftRightBorder("Designation : Chief Operating Officer"));
+                table26.addCell(getCellwithLeftAlignWithLeftRightBorder("Designation : Director"));
+                table26.addCell(getCellwithLeftAlignWithLeftRightBorder("Designation : "));
+                document.add(table26);
+
+                PdfPTable table27 = new PdfPTable(3);
+                table27.setWidths(new float[]{1, 1, 1});
+                table27.addCell(getCellwithLeftAlignWithoutTopBorder("Date :" + DateUtil.currentDate("E, dd MMM yyyy HH:mm:ss")));
+                table27.addCell(getCellwithLeftAlignWithoutTopBorder("Date :" + DateUtil.currentDate("E, dd MMM yyyy HH:mm:ss")));
+                table27.addCell(getCellwithLeftAlignWithoutTopBorder("Date :" + DateUtil.currentDate("E, dd MMM yyyy HH:mm:ss")));
+                document.add(table27);
+            } else {
+
+                PdfPTable table22 = new PdfPTable(2);
+                table22.setWidths(new float[]{1, 1});
+                table22.addCell(getCellLeftAlignWithBold("for and on behalf of"));
+                table22.addCell(getCellLeftAlignWithBold("for and on behalf of"));
+                document.add(table22);
+
+                PdfPTable table23 = new PdfPTable(2);
+                table23.setWidths(new float[]{1, 1});
+                table23.addCell(getCellwithLeftAlignWithLeftRightBorder("SKILWORTH TECHNOLOGIES PRIVATE LIMITED"));
+                table23.addCell(getCellwithLeftAlignWithLeftRightBorder("MERCHANT"));
+                document.add(table23);
+
+                PdfPTable table24 = new PdfPTable(2);
+                table24.setWidths(new float[]{1, 1});
+//            table24.addCell(getCellwithLeftAlignWithoutTopBorder(" "));
+                table24.addCell(getSignedImage());
+                table24.addCell(getCellwithLeftAlignWithoutTopBorder(" "));
+                document.add(table24);
+
+                PdfPTable table25 = new PdfPTable(2);
+                table25.setWidths(new float[]{1, 1});
+                table25.addCell(getCellwithLeftAlignWithLeftRightBorder("Name :   M. R. BHANU PRATHAP"));
+                table25.addCell(getCellwithLeftAlignWithLeftRightBorder("Name :   " + leadInfo.getMerchantName()));
+                document.add(table25);
+
+                PdfPTable table26 = new PdfPTable(2);
+                table26.setWidths(new float[]{1, 1});
+                table26.addCell(getCellwithLeftAlignWithLeftRightBorder("Designation : Chief Operating Officer"));
+                table26.addCell(getCellwithLeftAlignWithLeftRightBorder("Designation : Director"));
+                document.add(table26);
+
+                PdfPTable table27 = new PdfPTable(2);
+                table27.setWidths(new float[]{1, 1});
+                table27.addCell(getCellwithLeftAlignWithoutTopBorder("Date :" + DateUtil.currentDate()));
+                table27.addCell(getCellwithLeftAlignWithoutTopBorder("Date :" + DateUtil.currentDate()));
+                document.add(table27);
+            }
+            Font boldFontSize8 = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+            String content11 = "SCHEDULE A";
+            Paragraph paragraph11 = new Paragraph(content11, boldFontSize8);
+            paragraph11.setAlignment(Element.ALIGN_CENTER);
+            document.add(paragraph11);
+
+            String content12 = "\nFEES";
+            Paragraph paragraph12 = new Paragraph(content12, boldFontSize8);
+            paragraph12.setAlignment(Element.ALIGN_CENTER);
+            document.add(paragraph12);
+
+            String content13 = "Details of Merchant Discount Rate,Rental and Services Charges";
+            Paragraph paragraph13 = new Paragraph(content13, normalFontSize8);
+            document.add(paragraph13);
+
+            String content14 = "(A)\t\t\tMerchant Dicount Rate\n\n";
+            Paragraph paragraph14 = new Paragraph(content14, normalFontSize8);
+            paragraph14.setFirstLineIndent(30f);
+            document.add(paragraph14);
+
+            String content15 = "The Merchant Discount Rate(MDR) as provided below shall be recovered for every transactions and the settlements of the net proceeds will be done in line with the conditions enumerated in the Agreement.\n\n";
+            Paragraph paragraph15 = new Paragraph(content15, normalFontSize8);
+            paragraph15.setFirstLineIndent(30f);
+            document.add(paragraph15);
+
+            PdfPTable table28 = new PdfPTable(3);
+            table28.setWidths(new float[]{1, 3, 1});
+            table28.addCell(getCellLeftAlignWithoutBold(""));
+            table28.addCell(getCellLeftAlignWithoutBold("Debit Card : As per RBI Mandate + GST % for Visa and MasterCard"));
+            table28.addCell(getCellwithLeftAlignWithRightBottomBorder(" "));
+            document.add(table28);
+
+            PdfPTable table29 = new PdfPTable(3);
+            table29.setWidths(new float[]{1, 3, 1});
+            table29.addCell(getCellwithLeftAlignWithLeftBorder(""));
+            table29.addCell(getCellwithLeftAlignWithLeftBorder("ME Turnover* <= 20 lakhs = 0.40%"));
+            table29.addCell(getCellwithLeftAlignWithRightBorder(" "));
+            document.add(table29);
+
+            PdfPTable table30 = new PdfPTable(3);
+            table30.setWidths(new float[]{1, 3, 1});
+            table30.addCell(getCellwithLeftAlignWithLeftBorder(""));
+            table30.addCell(getCellwithLeftAlignWithLeftBorder("ME Turnover* > 20 lakhs = 0.90%"));
+            table30.addCell(getCellwithLeftAlignWithRightBorder(" "));
+            document.add(table30);
+
+            PdfPTable table31 = new PdfPTable(3);
+            table31.setWidths(new float[]{1, 3, 1});
+            table31.addCell(getCellwithLeftAlignWithLeftBorder(""));
+            table31.addCell(getCellwithLeftAlignWithLeftBorder("Rupay Cards = 0.00% As per RBI Mandate"));
+            table31.addCell(getCellwithLeftAlignWithRightBorder(" "));
+            document.add(table31);
+
+            PdfPTable table32 = new PdfPTable(3);
+            table32.setWidths(new float[]{1, 3, 1});
+            table32.addCell(getCellwithLeftAlignWithoutTopRightBorder(""));
+            table32.addCell(getCellwithLeftAlignWithoutTopRightBorder("*Previous Financial Year"));
+            table32.addCell(getCellwithLeftAlignWithoutTopLeft(" "));
+            document.add(table32);
+
+            PdfPTable table33 = new PdfPTable(3);
+            table33.setWidths(new float[]{1, 3, 1});
+            table33.addCell(getCellwithLeftAlignWithLeftBottomtBorderWithBold("SNO"));
+            table33.addCell(getCellwithLeftAlignWithLeftBottomtBorderWithBold("Particulars"));
+            table33.addCell(getCellwithLeftAlignWithRightBottomtBorderWithBold("# MDR (% of the transaction amount + Applicable taxes)"));
+            document.add(table33);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            PdfPTable table34 = new PdfPTable(3);
+            table34.setWidths(new float[]{1, 3, 1});
+            table34.addCell(getCellwithLeftAlignWithLeftBottomtBorder("1"));
+            table34.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Standard/classic credit card domestic transactions"));
+            // check whether the mdr subvention is requested or not
+            if (leadInfo.isMDRSubventionRequested()) {
+                if (leadInfo.getAppliedStdCC() != 0.0) {
+                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getAppliedStdCC() + "\t\t\t\t+GST %"));
+                } else {
+                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            } else {
+//                if (leadInfo.getStdCC() != 0.0) {
+//                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getStdCC() + "\t\t\t\t+GST %"));
+//                } else {
+//                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+//                }
+
+                if (leadInfo.getMarsMdrCharges() != null && leadInfo.getMarsMdrCharges().getStandardOrClassic() != null) {
+                    MdrChargesDto stdCC = mapper.readValue(leadInfo.getMarsMdrCharges().getStandardOrClassic(), MdrChargesDto.class);
+                    logger.info("std cc ---------- : {}", new Gson().toJson(stdCC));
+                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder(stdCC.getPercentage() + "\t\t\t\t+GST %"));
+                } else {
+                    table34.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            }
+            document.add(table34);
+
+            PdfPTable table35 = new PdfPTable(3);
+            table35.setWidths(new float[]{1, 3, 1});
+            table35.addCell(getCellwithLeftAlignWithLeftBottomtBorder("2"));
+            table35.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Premium/Platinum credit card domestic transactions"));
+            if (leadInfo.isMDRSubventionRequested()) {
+                if (leadInfo.getAppliedPremiumCC() != 0.0) {
+                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getAppliedPremiumCC() + "\t\t\t\t+GST %"));
+                } else {
+                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            } else {
+//                if (leadInfo.getPremiumCC() != 0.0) {
+//                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getPremiumCC() + "\t\t\t\t+GST %"));
+//                } else {
+//                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+//                }
+                if (leadInfo.getMarsMdrCharges() != null && leadInfo.getMarsMdrCharges().getPremiumOrPlatinum() != null) {
+                    MdrChargesDto premiumCC = mapper.readValue(leadInfo.getMarsMdrCharges().getPremiumOrPlatinum(), MdrChargesDto.class);
+                    logger.info("premium or platinum -------------- : {}", new Gson().toJson(premiumCC));
+                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder(premiumCC.getPercentage() + "\t\t\t\t+GST %"));
+                } else {
+                    table35.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            }
+            document.add(table35);
+
+            PdfPTable table36 = new PdfPTable(3);
+            table36.setWidths(new float[]{1, 3, 1});
+            table36.addCell(getCellwithLeftAlignWithLeftBottomtBorder("3"));
+            table36.addCell(getCellwithLeftAlignWithLeftBottomtBorder("SuperPremium/Signature credit card domestic transactions"));
+            if (leadInfo.isMDRSubventionRequested()) {
+                if (leadInfo.getAppliedSuperPremiumCC() != 0.0) {
+                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getAppliedSuperPremiumCC() + "\t\t\t\t+GST %"));
+                } else {
+                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            } else {
+//                if (leadInfo.getSuperPremiumCC() != 0.0) {
+//                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getSuperPremiumCC() + "\t\t\t\t+GST %"));
+//                } else {
+//                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+//                }
+                if (leadInfo.getMarsMdrCharges() != null && leadInfo.getMarsMdrCharges().getSuperPremiumOrSignature() != null) {
+                    MdrChargesDto superPremiumCC = mapper.readValue(leadInfo.getMarsMdrCharges().getSuperPremiumOrSignature(), MdrChargesDto.class);
+                    logger.info("super premium cc ----------: {}", new Gson().toJson(superPremiumCC));
+                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder(superPremiumCC.getPercentage() + "\t\t\t\t+GST %"));
+                } else {
+                    table36.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            }
+            document.add(table36);
+
+            PdfPTable table37 = new PdfPTable(3);
+            table37.setWidths(new float[]{1, 3, 1});
+            table37.addCell(getCellwithLeftAlignWithLeftBottomtBorder("4"));
+            table37.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Commercial/Corporate credit card domestic transactions"));
+            if (leadInfo.isMDRSubventionRequested()) {
+                if (leadInfo.getAppliedCorpCC() != 0.0) {
+                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getAppliedCorpCC() + "\t\t\t\t+GST %"));
+                } else {
+                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            } else {
+//                if (leadInfo.getCorpCC() != 0.0) {
+//                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder(leadInfo.getCorpCC() + "\t\t\t\t+GST %"));
+//                } else {
+//                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+//                }
+                if (leadInfo.getMarsMdrCharges() != null && leadInfo.getMarsMdrCharges().getCommercialOrCorporate() != null) {
+                    MdrChargesDto corpCC = mapper.readValue(leadInfo.getMarsMdrCharges().getCommercialOrCorporate(), MdrChargesDto.class);
+                    logger.info("Corp CC ------------ : {}", new Gson().toJson(corpCC));
+                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder(corpCC.getPercentage() + "\t\t\t\t+GST %"));
+                } else {
+                    table37.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+                }
+            }
+
+            document.add(table37);
+
+            PdfPTable table38 = new PdfPTable(3);
+            table38.setWidths(new float[]{1, 3, 1});
+            table38.addCell(getCellwithLeftAlignWithLeftBottomtBorder("5"));
+            table38.addCell(getCellwithLeftAlignWithLeftBottomtBorder("International Transactions DC/CC/QR"));
+            table38.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+            document.add(table38);
+
+            PdfPTable table39 = new PdfPTable(3);
+            table39.setWidths(new float[]{1, 3, 1});
+            table39.addCell(getCellwithLeftAlignWithLeftBottomtBorder("6"));
+            table39.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Amex credit card domestic transactions"));
+            table39.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+            document.add(table39);
+
+            PdfPTable table40 = new PdfPTable(3);
+            table40.setWidths(new float[]{1, 3, 1});
+            table40.addCell(getCellwithLeftAlignWithLeftBottomtBorder("7"));
+            table40.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Amex prepaid domestic transactions"));
+            table40.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+            document.add(table40);
+
+            PdfPTable table41 = new PdfPTable(3);
+            table41.setWidths(new float[]{1, 3, 1});
+            table41.addCell(getCellwithLeftAlignWithLeftBottomtBorder("8"));
+            table41.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Fuel Merchants"));
+            table41.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t\t+GST %"));
+            document.add(table41);
+
+            PdfPTable table42 = new PdfPTable(3);
+            table42.setWidths(new float[]{1, 3, 1});
+            table42.addCell(getCellwithLeftAlignWithLeftBottomtBorder("9"));
+            table42.addCell(getCellwithLeftAlignWithLeftBottomtBorder("cash @ Pos"));
+            table42.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t\t(Inclusive of GST)"));
+            document.add(table42);
+
+            PdfPTable table43 = new PdfPTable(3);
+            table43.setWidths(new float[]{1, 3, 1});
+            table43.addCell(getCellwithLeftAlignWithLeftBottomtBorder("10"));
+            table43.addCell(getCellwithLeftAlignWithLeftBottomtBorder("EMI"));
+            table43.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t0.5 % +GST"));
+            document.add(table43);
+
+            PdfPTable table44 = new PdfPTable(3);
+            table44.setWidths(new float[]{1, 3, 1});
+            table44.addCell(getCellwithLeftAlignWithLeftBottomtBorder("11"));
+            table44.addCell(getCellwithLeftAlignWithLeftBottomtBorder("Diners/Discover Card Transactions"));
+            table44.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t3 % +GST %"));
+            document.add(table44);
+
+            PdfPTable table45 = new PdfPTable(3);
+            table45.setWidths(new float[]{1, 3, 1});
+            table45.addCell(getCellwithLeftAlignWithLeftBottomtBorder("12"));
+            table45.addCell(getCellwithLeftAlignWithLeftBottomtBorder("QR - Standard/Classic credit Card domestic Transactions"));
+            table45.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t +GST %"));
+            document.add(table45);
+
+            PdfPTable table46 = new PdfPTable(3);
+            table46.setWidths(new float[]{1, 3, 1});
+            table46.addCell(getCellwithLeftAlignWithLeftBottomtBorder("13"));
+            table46.addCell(getCellwithLeftAlignWithLeftBottomtBorder("QR - Premium/Platinum credit Card domestic Transactions"));
+            table46.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t +GST %"));
+            document.add(table46);
+
+            PdfPTable table47 = new PdfPTable(3);
+            table47.setWidths(new float[]{1, 3, 1});
+            table47.addCell(getCellwithLeftAlignWithLeftBottomtBorder("14"));
+            table47.addCell(getCellwithLeftAlignWithLeftBottomtBorder("QR - SuperPremium/Signature credit Card domestic Transactions"));
+            table47.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t +GST %"));
+            document.add(table47);
+
+            PdfPTable table48 = new PdfPTable(3);
+            table48.setWidths(new float[]{1, 3, 1});
+            table48.addCell(getCellwithLeftAlignWithLeftBottomtBorder("15"));
+            table48.addCell(getCellwithLeftAlignWithLeftBottomtBorder("QR - Commercial/Corporate credit Card domestic Transactions"));
+            table48.addCell(getCellwithRightAlignWithRightBottomtBorder("\t\t3 % +GST %"));
+            document.add(table48);
+
+            String content16 = "\n1\t To qualify for 0.4% and 04% MDR, Merchant to submit previous financial year sales tax filing return/GST " +
+                    "Return/Certificates from their auditor on the turnover duly signed and sealed by auditor and Merchant\n" +
+                    "2\t The Merchant agrees that the prices charged to the Cardholder will not exceed the price charged by the Merchants to general public for the relevant goods and services. \n" +
+                    "3\t Unsettled Batches or Open transactions: Merchants with multiple " +
+                    "settlement/manual settlement option need to be settled by the end of day. The unsettled transactions for more than " +
+                    "2 days from the date of transaction will attract a penalty of 0.5% over and above the agreed MDR payable in terms " +
+                    "of Visa/MasterCard/Rupay/Amex/Diners/Discover guidelines\n\n";
+            Paragraph paragraph16 = new Paragraph(content16, normalFontSize8);
+            paragraph16.setIndentationLeft(20f);
+            document.add(paragraph16);
+
+            document.newPage();
+            String content17 = "(B) In case of the below mentioned situations, the Bank has the right to recover the charges from the Merchants as under :\n\n";
+            Paragraph paragraph17 = new Paragraph(content17, normalFontSize8);
+            paragraph17.setIndentationLeft(20f);
+            document.add(paragraph17);
+
+
+            PdfPTable table49 = new PdfPTable(3);
+            table49.setWidthPercentage(80);
+            table49.setWidths(new float[]{1, 3, 4});
+            table49.addCell(getCellwithcenterAlignWithLeftTopBorderWithBold("SNo"));
+            table49.addCell(getCellwithcenterAlignWithLeftTopBorderWithBold("Particulars"));
+            table49.addCell(getCellwithCenterAlignWithRightToptBorderWithBold("Charges"));
+            document.add(table49);
+
+            PdfPTable table50 = new PdfPTable(3);
+            table50.setWidthPercentage(80);
+            table50.setWidths(new float[]{1, 3, 4});
+            table50.addCell(getCellwithLeftAlignWithLeftBottomtBorder("1"));
+            table50.addCell(getCellwithLeftAlignWithLeftBottomtBorder("De-installation charges"));
+            table50.addCell(getCellwithLeftAlignWithRightBottomtBorder("If de-installation is done\n-Within 6 months from the date of installations INR ---+GST%\n-after 6 months and before one year from the date of installations INR ---+GST%"));
+            document.add(table50);
+
+            PdfPTable table51 = new PdfPTable(3);
+            table51.setWidthPercentage(80);
+            table51.setWidths(new float[]{1, 3, 4});
+            table51.addCell(getCellwithLeftAlignWithLeftBottomtBorder("2"));
+            table51.addCell(getCellwithLeftAlignWithLeftBottomtBorder("a) Physical damage to the terminal due to mishandling(other than normal wear and tear)\nb) Adaptor and cable chargers."));
+            table51.addCell(getCellwithLeftAlignWithRightBottomtBorder("INR ----- +GST or the actual charges whichever is higher to be debited from the Merchant account as per the actual\n\nAdaptor(INR 200) and cable(INR150) GST%"));
+            document.add(table51);
+
+            String content18 = "\n(C) In view of the merchant being a small merchant in accordance with the terms of RBI Regulations. The merchant shall be eligible for reduced MDR in accordance with the above " +
+                    "subject to the merchant executing the declaration letter as provided in Exhibit A to the Schedule A\n\n" +
+                    "This Schedule shall be governed by the terms and conditions mentioned in the agreement and shall be deemed to be part and parcel " +
+                    "and shall be read in the conjunction with the agreement.";
+            Paragraph paragraph18 = new Paragraph(content18, normalFontSize8);
+            document.add(paragraph18);
+            if (leadInfo.getYearlyRevenue() == Constants.YEARLY_REVENUE_LESS_THAN_20L && leadInfo.getMcc().isFuelMcc()) {
+
+                document.newPage();
+
+                Font boldFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+                String content19 = "Exhibit A\n\n";
+                Paragraph paragraph19 = new Paragraph(content19, boldFont);
+                paragraph19.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph19);
+
+
+                String content20 = "Merchant Declaration\n\n";
+                Paragraph paragraph20 = new Paragraph(content20, boldFont);
+//                paragraph20.setIndentationLeft(20f);
+                paragraph20.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph20);
+
+                String date = DateUtil.currentDate("yyyy-MM-dd HH:mm:ss");
+                String content21 = "Date  : " + date + "\n";
+                Paragraph paragraph21 = new Paragraph(content21, normalFontSize8);
+//                paragraph21.setIndentationLeft(200f);
+                paragraph21.setAlignment(Element.ALIGN_RIGHT);
+
+                document.add(paragraph21);
+
+                Paragraph paragraph22 = new Paragraph();
+                Chunk chunk = new Chunk("Merchant legal name: " + leadInfo.getLegalName(), new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph22.add(chunk);
+//                Chunk chunk1 = new Chunk(leadInfo.getLegalName(),new Font(Font.FontFamily.TIMES_ROMAN,8,Font.UNDERLINE));
+//                paragraph22.add(chunk1);
+                paragraph22.setAlignment(Element.ALIGN_LEFT);
+                document.add(paragraph22);
+
+                Paragraph paragraph23 = new Paragraph();
+                Chunk chunk2 = new Chunk("\nMerchant DBA Name: " + leadInfo.getDbaName(), new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph23.add(chunk2);
+//                Chunk chunk3 = new Chunk(leadInfo.getDbaName(),new Font(Font.FontFamily.TIMES_ROMAN,8,Font.UNDERLINE));
+//                paragraph23.add(chunk3);
+                paragraph23.setAlignment(Element.ALIGN_LEFT);
+                document.add(paragraph23);
+
+                String content24 = "\nIn favour of \n\n";
+                Paragraph paragraph24 = new Paragraph(content24, normalFontSize8);
+                document.add(paragraph24);
+
+                Paragraph paragraph25 = new Paragraph();    //new Paragraph(content25, normalFontSize8);
+                Chunk boldTextChunk = new Chunk("SKILWORTH TECHNOLOGIES PVT LTD", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD));
+                paragraph25.add(boldTextChunk);
+                Chunk normalTextChunk = new Chunk(", a company incorporated under Companies Act 1956," +
+                        "having registered office Address at NO 20C/2A Sarangapani Street, T. Nagar, Chennai, Tamil Nadu-600017 " +
+                        "(hereinafter referred to as “Bijlipay”).", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+//                paragraph25.add(content25);
+                paragraph25.add(normalTextChunk);
+
+                document.add(paragraph25);
+
+                String content26 = "\nWhereas: \n\n";
+                Paragraph paragraph26 = new Paragraph(content26, normalFontSize8);
+                document.add(paragraph26);
+
+                String content27 = "In reference to RBI circular RBI/2017-18/105 DPSS.CO.PD No.1633/02.14.003/2017-18, titled" +
+                        "“Rationalisation of Merchant Discount Rate (MDR) For Debit Card Transactions”, financial institutes" +
+                        "such as Bijlipay are permitted to levy lower Merchant Discount Rate (“MDR”) on Debit Card" +
+                        "Transactions of small merchant (Merchant with turnover up to INR 20,00,000/- (Indian Rupees Twenty" +
+                        "Lakhs only) during the previous financial year (hereinafter “RBI Circular”).\n\n";
+                Paragraph paragraph27 = new Paragraph(content27, normalFontSize8);
+                document.add(paragraph27);
+
+                String content28 = "To avail the facility of lower MDR, the Merchant shall provide this declaration by hereby declaring and\n" +
+                        "confirming the points mentioned hereunder (“Declaration”).\n";
+                Paragraph paragraph28 = new Paragraph(content28, normalFontSize8);
+                document.add(paragraph28);
+
+                Paragraph paragraph29 = new Paragraph();
+                Chunk chunk4 = new Chunk("Declaration", new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD));
+                paragraph29.add(chunk4);
+                paragraph29.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph29);
+
+                Paragraph paragraph30 = new Paragraph();
+                Chunk chunk5 = new Chunk("\n1) The Merchant agrees that the turnover for financial year " + DateUtil.getPreviousYear() + " – " + DateUtil.currentDate("yyyy") + " is up to INR" +
+                        "20,00,000/- (Indian Rupees Twenty Lakhs only) and hence the Merchant shall be entitled to a lower" +
+                        "MDR on debit card transactions as per aforesaid RBI Circular.\n2) Attached herewith is the proof in respect of the turnover from time to time as may be required\n" +
+                        "/sought by the RBI/ engaging banks.\n" +
+                        "3) The Merchant agrees failure to provide proof mentioned in point 2 above or having turnover over " +
+                        "and above the stipulated INR 20,00,000/- (Indian Rupees Twenty Lakhs only) in a given financial " +
+                        "year during which the Merchant is associated with Bijlipay, then Bijlipay shall have right to levy " +
+                        "MDR specific to other merchants category (i.e., Merchant having turnover over and above INR " +
+                        "20,00,000/- (Indian Rupees Twenty Lakhs only) during the previous financial year) without " +
+                        "providing any prior notice to the Merchant.\n" +
+                        "4) The Merchant agrees that it is solely responsible for the information declared in this Declaration " +
+                        "and Bijlipay shall not be liable for any financial, operational, consequential and legal damage " +
+                        "(direct or indirect) in case of any false information provided in this Declaration.\n" +
+                        "5) The Merchant agrees that if any part or the entire Declaration is deemed false, incorrect or forged, " +
+                        "then the Merchant shall indemnify Bijlipay and its shareholders, employees, officers, agents, " +
+                        "consultants, contractors and advisors against any claims made by any third party. Notwithstanding " +
+                        "what is provided in this point 5, Bijlipay shall be eligible to make claims for damages, losses, loss of repute, loss of business, etc. against the Merchant and the Merchant shall be liable to make all " +
+                        "payments in respect of the same to Bijlipay. Additionally, Bijlipay shall, at their sole discretion, opt " +
+                        "to terminate the Original Agreement executed with the Merchant; and the Merchant shall pay to " +
+                        "Bijlipay, without any delay and/or demur, an amount as requested by Bijlipay (“Amount”). The " +
+                        "Merchant agrees that Bijlipay will be the sole authority to finalise the Amount to be paid by the " +
+                        "Merchant.\n" +
+                        "6) The Merchant authorises Bijlipay to deduct the Amount from any settlement reached and/or debit " +
+                        "from my account.\n" +
+                        "7) There will be service charge of Re.1 + GST per transaction.", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph30.add(chunk5);
+                document.add(paragraph30);
+
+                Paragraph paragraph31 = new Paragraph();
+                Chunk chunk6 = new Chunk("\nAccepted by", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph31.add(chunk6);
+                document.add(paragraph31);
+
+                Paragraph paragraph32 = new Paragraph();
+                Chunk chunk7 = new Chunk("By:\n" +
+                        "Name:\n" +
+                        "Designation", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph32.add(chunk7);
+                document.add(paragraph32);
+
+                Paragraph paragraph33 = new Paragraph();
+                Chunk chunk8 = new Chunk("I hereby declare that Mr/Mrs/Miss " + leadInfo.getContactName() + " has signed this Declaration in my presence" +
+                        "on this day ___________ and date " + DateUtil.currentDate("yyyy-MM-dd HH:mm:ss") + "", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph33.add(chunk8);
+                document.add(paragraph33);
+
+                Paragraph paragraph34 = new Paragraph();
+                Chunk chunk9 = new Chunk("\nBy:\n" +
+                        "Name:\n" +
+                        "Designation", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph34.add(chunk9);
+                document.add(paragraph34);
+
+
+                document.newPage();
+
+                Paragraph paragraph35 = new Paragraph();
+                Chunk chunk10 = new Chunk("Annexure - B", new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD));
+                paragraph35.add(chunk10);
+                paragraph35.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph35);
+
+                Paragraph paragraph36 = new Paragraph();
+                Chunk chunk11 = new Chunk("\nActivation of Fuel merchant:", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph36.add(chunk11);
+                document.add(paragraph36);
+
+                Paragraph paragraph37 = new Paragraph();
+                Chunk chunk12 = new Chunk("\n1. For all fuel transactions for debit card there will be <2K transactions – 0.40% & >2K " +
+                        "transactions – 0.75% service fee (Excluding GST), this will get deducted on the daily payment " +
+                        "to the merchant.\n" +
+                        "2. This Annexure shall be governed by the terms and conditions mentioned in the Agreement and " +
+                        "shall be deemed to be part and parcel and shall be read in conjunction with the merchant " +
+                        "Agreement.", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph37.add(chunk12);
+                document.add(paragraph37);
+            } else if (leadInfo.getYearlyRevenue() == Constants.YEARLY_REVENUE_LESS_THAN_20L) {
+                document.newPage();
+
+                Font boldFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+                String content19 = "Exhibit A\n\n";
+                Paragraph paragraph19 = new Paragraph(content19, boldFont);
+                paragraph19.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph19);
+
+
+                String content20 = "Merchant Declaration\n\n";
+                Paragraph paragraph20 = new Paragraph(content20, boldFont);
+//                paragraph20.setIndentationLeft(20f);
+                paragraph20.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph20);
+
+                String date = DateUtil.currentDate("yyyy-MM-dd HH:mm:ss");
+                String content21 = "Date  : " + date + "\n";
+                Paragraph paragraph21 = new Paragraph(content21, normalFontSize8);
+//                paragraph21.setIndentationLeft(200f);
+                paragraph21.setAlignment(Element.ALIGN_RIGHT);
+
+                document.add(paragraph21);
+
+                Paragraph paragraph22 = new Paragraph();
+                Chunk chunk = new Chunk("Merchant legal name: " + leadInfo.getLegalName(), new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph22.add(chunk);
+//                Chunk chunk1 = new Chunk(leadInfo.getLegalName(),new Font(Font.FontFamily.TIMES_ROMAN,8,Font.UNDERLINE));
+//                paragraph22.add(chunk1);
+                paragraph22.setAlignment(Element.ALIGN_LEFT);
+                document.add(paragraph22);
+
+                Paragraph paragraph23 = new Paragraph();
+                Chunk chunk2 = new Chunk("\nMerchant DBA Name: " + leadInfo.getDbaName(), new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph23.add(chunk2);
+//                Chunk chunk3 = new Chunk(leadInfo.getDbaName(),new Font(Font.FontFamily.TIMES_ROMAN,8,Font.UNDERLINE));
+//                paragraph23.add(chunk3);
+                paragraph23.setAlignment(Element.ALIGN_LEFT);
+                document.add(paragraph23);
+
+                String content24 = "\nIn favour of \n\n";
+                Paragraph paragraph24 = new Paragraph(content24, normalFontSize8);
+                document.add(paragraph24);
+
+                Paragraph paragraph25 = new Paragraph();    //new Paragraph(content25, normalFontSize8);
+                Chunk boldTextChunk = new Chunk("SKILWORTH TECHNOLOGIES PVT LTD", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD));
+                paragraph25.add(boldTextChunk);
+                Chunk normalTextChunk = new Chunk(", a company incorporated under Companies Act 1956," +
+                        "having registered office Address at NO 20C/2A Sarangapani Street, T. Nagar, Chennai, Tamil Nadu-600017 " +
+                        "(hereinafter referred to as “Bijlipay”).", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+//                paragraph25.add(content25);
+                paragraph25.add(normalTextChunk);
+
+                document.add(paragraph25);
+
+                String content26 = "\nWhereas: \n\n";
+                Paragraph paragraph26 = new Paragraph(content26, normalFontSize8);
+                document.add(paragraph26);
+
+                String content27 = "In reference to RBI circular RBI/2017-18/105 DPSS.CO.PD No.1633/02.14.003/2017-18, titled" +
+                        "“Rationalisation of Merchant Discount Rate (MDR) For Debit Card Transactions”, financial institutes" +
+                        "such as Bijlipay are permitted to levy lower Merchant Discount Rate (“MDR”) on Debit Card" +
+                        "Transactions of small merchant (Merchant with turnover up to INR 20,00,000/- (Indian Rupees Twenty" +
+                        "Lakhs only) during the previous financial year (hereinafter “RBI Circular”).\n\n";
+                Paragraph paragraph27 = new Paragraph(content27, normalFontSize8);
+                document.add(paragraph27);
+
+                String content28 = "To avail the facility of lower MDR, the Merchant shall provide this declaration by hereby declaring and\n" +
+                        "confirming the points mentioned hereunder (“Declaration”).\n";
+                Paragraph paragraph28 = new Paragraph(content28, normalFontSize8);
+                document.add(paragraph28);
+
+                Paragraph paragraph29 = new Paragraph();
+                Chunk chunk4 = new Chunk("Declaration", new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD));
+                paragraph29.add(chunk4);
+                paragraph29.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph29);
+
+                Paragraph paragraph30 = new Paragraph();
+                Chunk chunk5 = new Chunk("\n1) The Merchant agrees that the turnover for financial year " + DateUtil.getPreviousYear() + " – " + DateUtil.currentDate("yyyy") + " is up to INR" +
+                        "20,00,000/- (Indian Rupees Twenty Lakhs only) and hence the Merchant shall be entitled to a lower" +
+                        "MDR on debit card transactions as per aforesaid RBI Circular.\n2) Attached herewith is the proof in respect of the turnover from time to time as may be required\n" +
+                        "/sought by the RBI/ engaging banks.\n" +
+                        "3) The Merchant agrees failure to provide proof mentioned in point 2 above or having turnover over " +
+                        "and above the stipulated INR 20,00,000/- (Indian Rupees Twenty Lakhs only) in a given financial " +
+                        "year during which the Merchant is associated with Bijlipay, then Bijlipay shall have right to levy " +
+                        "MDR specific to other merchants category (i.e., Merchant having turnover over and above INR " +
+                        "20,00,000/- (Indian Rupees Twenty Lakhs only) during the previous financial year) without " +
+                        "providing any prior notice to the Merchant.\n" +
+                        "4) The Merchant agrees that it is solely responsible for the information declared in this Declaration " +
+                        "and Bijlipay shall not be liable for any financial, operational, consequential and legal damage " +
+                        "(direct or indirect) in case of any false information provided in this Declaration.\n" +
+                        "5) The Merchant agrees that if any part or the entire Declaration is deemed false, incorrect or forged, " +
+                        "then the Merchant shall indemnify Bijlipay and its shareholders, employees, officers, agents, " +
+                        "consultants, contractors and advisors against any claims made by any third party. Notwithstanding " +
+                        "what is provided in this point 5, Bijlipay shall be eligible to make claims for damages, losses, loss of repute, loss of business, etc. against the Merchant and the Merchant shall be liable to make all " +
+                        "payments in respect of the same to Bijlipay. Additionally, Bijlipay shall, at their sole discretion, opt " +
+                        "to terminate the Original Agreement executed with the Merchant; and the Merchant shall pay to " +
+                        "Bijlipay, without any delay and/or demur, an amount as requested by Bijlipay (“Amount”). The " +
+                        "Merchant agrees that Bijlipay will be the sole authority to finalise the Amount to be paid by the " +
+                        "Merchant.\n" +
+                        "6) The Merchant authorises Bijlipay to deduct the Amount from any settlement reached and/or debit " +
+                        "from my account.\n" +
+                        "7) There will be service charge of Re.1 + GST per transaction.", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph30.add(chunk5);
+                document.add(paragraph30);
+
+                Paragraph paragraph31 = new Paragraph();
+                Chunk chunk6 = new Chunk("\nAccepted by", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph31.add(chunk6);
+                document.add(paragraph31);
+
+                Paragraph paragraph32 = new Paragraph();
+                Chunk chunk7 = new Chunk("By:\n" +
+                        "Name:\n" +
+                        "Designation", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph32.add(chunk7);
+                document.add(paragraph32);
+
+                Paragraph paragraph33 = new Paragraph();
+                Chunk chunk8 = new Chunk("I hereby declare that Mr/Mrs/Miss " + leadInfo.getContactName() + " has signed this Declaration in my presence" +
+                        "on this day ___________ and date " + DateUtil.currentDate("yyyy-MM-dd HH:mm:ss") + "", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph33.add(chunk8);
+                document.add(paragraph33);
+
+                Paragraph paragraph34 = new Paragraph();
+                Chunk chunk9 = new Chunk("\nBy:\n" +
+                        "Name:\n" +
+                        "Designation", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph34.add(chunk9);
+                document.add(paragraph34);
+            } else if (leadInfo.getMcc().isFuelMcc()) {
+
+                document.newPage();
+
+                Paragraph paragraph35 = new Paragraph();
+                Chunk chunk10 = new Chunk("Annexure - B", new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD));
+                paragraph35.add(chunk10);
+                paragraph35.setAlignment(Element.ALIGN_CENTER);
+                document.add(paragraph35);
+
+                Paragraph paragraph36 = new Paragraph();
+                Chunk chunk11 = new Chunk("\nActivation of Fuel merchant:", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph36.add(chunk11);
+                document.add(paragraph36);
+
+                Paragraph paragraph37 = new Paragraph();
+                Chunk chunk12 = new Chunk("\n1. For all fuel transactions for debit card there will be <2K transactions – 0.40% & >2K " +
+                        "transactions – 0.75% service fee (Excluding GST), this will get deducted on the daily payment " +
+                        "to the merchant.\n" +
+                        "2. This Annexure shall be governed by the terms and conditions mentioned in the Agreement and " +
+                        "shall be deemed to be part and parcel and shall be read in conjunction with the merchant " +
+                        "Agreement.", new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL));
+                paragraph37.add(chunk12);
+                document.add(paragraph37);
+            }
+//            if(leadInfo.getLeadSource()!= null && leadInfo.getLeadSource().getLeadSourceName().equalsIgnoreCase(Constants.LEAD_SOURCE_FIDY_PAY)){
+//
+//                List<String> pdfList = new ArrayList<>();
+//                pdfList = pdfEsignData.getUploadedDocuments().stream().map(UploadedDocuments::getFileName).filter(fileName -> fileName.endsWith(".pdf")).collect(Collectors.toList());
+//                logger.info("pdf list ------: {}",pdfList);
+//                if (pdfList.size() > 0) {
+//
+//                    pdfList.forEach(pdf -> {
+//                        Path path = Paths.get(Constants.IMAGE_PATH + pdf);
+//                        try {
+//                            byte[] appendPdfBytes = Files.readAllBytes(path);
+//                            PdfReader appendPdfReader = new PdfReader(appendPdfBytes);
+//                            PdfReader.unethicalreading = true;
+//                            byteList.add(appendPdfBytes);
+//                            int numberOfPages1  = appendPdfReader.getNumberOfPages();
+//                            for (int pageNum = 1; pageNum <= numberOfPages1; pageNum++) {
+//                                // Import each page and add it to the merged document
+//                                pdfWriter.addPage(pdfWriter.getImportedPage(appendPdfReader, pageNum));
+//                            }
+//                            // Close the PdfReader for the PDF to be appended
+//                            appendPdfReader.close();
+//                        } catch (IOException | BadPdfFormatException e) {
+//                            e.printStackTrace();
+//                        }
+//                    });
+//                }
+//            }
+//            logger.info("page number ---------- :{}",document.getPageSize());
+            document.close();
+            byteArrayOutputStream.close();
+//            return byteArrayOutputStream;
+            List<byte[]> byteList = new ArrayList<>();
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document mergedDocument = new Document();
+//            mergedDocument.setPageSize(PageSize.A4);
+            PdfCopy pdfWriter = new PdfCopy(mergedDocument, outputStream);
+            mergedDocument.open();
+
+            PdfReader existingPdfReader = new PdfReader(byteArray);
+
+            int numberOfPages = existingPdfReader.getNumberOfPages();
+
+            for (int pageNum = 1; pageNum <= numberOfPages; pageNum++) {
+                pdfWriter.addPage(pdfWriter.getImportedPage(existingPdfReader, pageNum));
+            }
+            if (leadInfo.getLeadSource() != null && leadInfo.getLeadSource().getLeadSourceName().equalsIgnoreCase(Constants.LEAD_SOURCE_FIDY_PAY)) {
+                List<String> pdfList = new ArrayList<>();
+                pdfList = pdfEsignData.getUploadedDocuments().stream().map(UploadedDocuments::getFileName).filter(fileName -> fileName.endsWith(".pdf")).collect(Collectors.toList());
+                logger.info("pdf list ------: {}", pdfList);
+                if (pdfList.size() > 0) {
+
+                    pdfList.forEach(pdf -> {
+                        Path path = pdfEsignData.getFileConfig().resolve(pdf);
+                        try {
+                            byte[] appendPdfBytes = Files.readAllBytes(path);
+                            PdfReader appendPdfReader = new PdfReader(appendPdfBytes);
+                            PdfReader.unethicalreading = true;
+                            byteList.add(appendPdfBytes);
+                            int numberOfPages1 = appendPdfReader.getNumberOfPages();
+                            for (int pageNum = 1; pageNum <= numberOfPages1; pageNum++) {
+                                // Import each page and add it to the merged document
+                                pdfWriter.addPage(pdfWriter.getImportedPage(appendPdfReader, pageNum));
+                            }
+                            // Close the PdfReader for the PDF to be appended
+                            appendPdfReader.close();
+                        } catch (IOException | BadPdfFormatException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+            }
+            logger.info("page number ---------- :{}", document.getPageSize());
+            mergedDocument.close();
+            return outputStream;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static PdfPCell getHeaderCell(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    private static PdfPCell getHeaderCellColumns(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        return cell;
+    }
+
+    private static PdfPCell getHeaderWithCenterAlign(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 10, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        return cell;
+    }
+
+    private static PdfPCell getHeaderWithLeftAlign(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        return cell;
+    }
+
+    private static PdfPCell getRowCellwithLeftAlign(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    private static PdfPCell getRowCellwithJusifyAlign(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_JUSTIFIED);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    private static PdfPCell getRowCellwithCenterAlign(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithoutBorder(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getCellWithLeftBorder(PdfPTable text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+//        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(text);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithoutBorderRightAlign(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 9, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithoutBorderSize8(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithRightBorderSize8(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithRightBottomBorderSize8(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithLeftBorderSize8(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithLeftBottomBorderSize8(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithoutRightBorderWithPadding4(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithAlltBorderWithPadding4(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithAllBorderWithPadding4(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithoutRightBorderWithPadding4CenterAlign(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlign(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(3.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getSubHeaderCellwithCenterAlignWithBold(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 9, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+
+        return cell;
+    }
+
+    private static PdfPCell getSubHeaderwithLeftAlignWithBold(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellLeftAlignWithBold(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+//        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellLeftAlignWithoutBold(String text) {
+        Font font = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fontSelector = new FontSelector();
+        fontSelector.addFont(font);
+        Phrase phrase = fontSelector.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+//        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBottomBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+//        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithLeftRightBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithLeftBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithoutTopBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+//        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithoutTopRightBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+//        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithoutTopLeft(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBottomtBorderWithBold(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithCenterAlignWithRightToptBorderWithBold(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+//        cell.setBorderWidthTop(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithRightAlignWithRightBottomtBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBottomtBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBottomtBorderSize45(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithRightBottomtBorderSize(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithLeftBottomtBorderWithBold(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+//        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithcenterAlignWithLeftTopBorderWithBold(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.BOLD);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(4.0f);
+//        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+//        cell.setBorderWidthLeft(0);
+//        cell.setBorderWidthBottom(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithLeftBottomtBorder(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignWithLeftBottomtBorderSize45(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        return cell;
+    }
+
+    private static PdfPCell getCellwithLeftAlignBottomtBorderSize45(String text) {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 8, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(5.0f);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+
+        return cell;
+    }
+
+    private PdfPCell getCheckBox1() throws BadElementException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.CHECKBOX_SELECTED_IMAGE;
+        Image image12 = Image.getInstance(imagePath);
+        image12.scaleToFit(10, 10); // Adjust the image size as needed
+
+        pdfPCell.addElement(image12);
+
+        pdfPCell.setPadding(4.0f);
+        pdfPCell.setBorderWidthBottom(0);
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setBorderWidthRight(0);
+        pdfPCell.setBorderWidthLeft(0);
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getCheckBox2() throws BadElementException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.CHECKBOX_UNSELECTED_IMAGE;
+        Image image12 = Image.getInstance(imagePath);
+        image12.scaleToFit(10, 10); // Adjust the image size as needed
+
+        pdfPCell.addElement(image12);
+
+        pdfPCell.setPadding(4.0f);
+        pdfPCell.setBorderWidthBottom(0);
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setBorderWidthRight(0);
+        pdfPCell.setBorderWidthLeft(0);
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getCheckBox2WithLeftBottomBorder() throws BadElementException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.CHECKBOX_UNSELECTED_IMAGE;
+        Image image12 = Image.getInstance(imagePath);
+        image12.scaleToFit(10, 10); // Adjust the image size as needed
+
+        pdfPCell.addElement(image12);
+
+        pdfPCell.setPadding(4.0f);
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setBorderWidthRight(0);
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getCheckBox2WithRightBorder() throws BadElementException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.CHECKBOX_UNSELECTED_IMAGE;
+        Image image12 = Image.getInstance(imagePath);
+        image12.scaleToFit(10, 10); // Adjust the image size as needed
+
+        pdfPCell.addElement(image12);
+
+        pdfPCell.setPadding(4.0f);
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setBorderWidthRight(0);
+//        pdfPCell.setBorderWidthLeft(0);
+        pdfPCell.setBorderWidthBottom(0);
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getCheckBox2WithoutLeftBorder() throws BadElementException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.CHECKBOX_UNSELECTED_IMAGE;
+        Image image12 = Image.getInstance(imagePath);
+        image12.scaleToFit(10, 10); // Adjust the image size as needed
+
+        pdfPCell.addElement(image12);
+
+        pdfPCell.setPadding(4.0f);
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setBorderWidthRight(0);
+        pdfPCell.setBorderWidthLeft(0);
+        pdfPCell.setBorderWidthBottom(0);
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getSignedImage() throws DocumentException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        String imagePath = Constants.SIGNED_IMAGE;
+
+        Image image = Image.getInstance(imagePath);
+        image.scaleToFit(75, 45); // Adjust the image size as needed
+        image.setCompressionLevel(9);
+        pdfPCell.addElement(image);
+
+
+        pdfPCell.setBorderWidthTop(0);
+        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        pdfPCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        pdfPCell.setPaddingLeft(50.0f);
+
+
+        return pdfPCell;
+    }
+
+    private PdfPCell getDocumentImage(String fileName) throws DocumentException, IOException {
+
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        PdfPCell pdfPCell = new PdfPCell();
+
+        File imageFile = new File(Constants.IMAGE_PATH + fileName);
+        long fileSizeInBytes = imageFile.length();
+        long fileSizeInKB = fileSizeInBytes / 1024; // Convert bytes to kilobytes
+
+        logger.info("Image File Size: ----------: {}  KB", fileSizeInKB);
+
+        Image image = Image.getInstance(Constants.IMAGE_PATH + fileName);
+
+        float aspectRatio = image.getWidth() / image.getHeight();
+
+        float desiredWidth = 200;
+        float desiredHeight = 200;
+
+        if (aspectRatio > 1) { // Landscape image
+            image.scaleAbsolute(desiredWidth, desiredWidth / aspectRatio);
+        } else { // Portrait image
+            image.scaleAbsolute(desiredHeight * aspectRatio, desiredHeight);
+        }
+//        image.scaleToFit(200, 200); // Adjust the image size as needed
+        image.setCompressionLevel(9);
+        pdfPCell.setPadding(10f);
+        pdfPCell.addElement(image);
+
+        pdfPCell.setBorderWidthBottom(0);
+        pdfPCell.setBorderWidthLeft(0);
+        pdfPCell.setBorderWidthRight(0);
+        pdfPCell.setBorderWidthTop(0);
+
+        return pdfPCell;
+    }
+
+    private static Font getFont(BaseColor color) {
+        Font font = new Font();
+        font.setSize(12);
+        font.setColor(color);
+        return font;
+    }
+
+    public static PdfPCell getRowCellWithoutBorderForCheckBox(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static PdfPCell getRowCellWithRightBorderForCheckBox(String text) {
+        Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 7, Font.NORMAL);
+        FontSelector fs = new FontSelector();
+        fs.addFont(catFont);
+        Phrase phrase = fs.process(text);
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setPadding(4.0f);
+        cell.setBorderWidthBottom(0);
+        cell.setBorderWidthTop(0);
+//        cell.setBorderWidthRight(0);
+        cell.setBorderWidthLeft(0);
+        return cell;
+    }
+
+    public static int roundToMultipleOfFour(int number) {
+        return (int) (Math.ceil(number / 4.0) * 4);
+    }
+
+    public static int roundToMultipleOfTwo(int number) {
+        return (int) (Math.ceil(number / 2.0) * 2);
+    }
+
+
+    public static boolean isStringInList(List<String> list, String target) {
+        return !list.contains(target);
+    }
+
+    public static List<String> convertStringToList(String input) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Use TypeReference to preserve generic type information
+        return objectMapper.readValue(input, new TypeReference<List<String>>() {
+        });
+    }
+}
